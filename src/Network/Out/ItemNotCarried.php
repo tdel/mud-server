@@ -1,0 +1,20 @@
+<?php
+
+namespace App\Network\Out;
+
+use App\Auth\Client;
+use App\Network\Telnet\OutputTelnetMessageInterface;
+use App\Network\Telnet\TelnetOutputInterface;
+
+final class ItemNotCarried implements OutputTelnetMessageInterface
+{
+    public function __construct(
+        private readonly string $name,
+    ) {
+    }
+
+    public function toTelnet(TelnetOutputInterface $output, Client $client): void
+    {
+        $output->write(sprintf("You aren't carrying \"%s\".\n", $this->name));
+    }
+}

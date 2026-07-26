@@ -3,6 +3,8 @@
 namespace App\Game;
 
 use App\Entity\Account;
+use App\Entity\Item;
+use App\Entity\ItemTemplate;
 use App\Entity\Room;
 
 /**
@@ -55,5 +57,13 @@ final class GameWorld
         }
 
         return false;
+    }
+
+    public function spawnItemInRoom(ItemTemplate $template, Room $room): Item
+    {
+        $item = new Item($template);
+        $item->moveToRoom($room);
+
+        return $item;
     }
 }

@@ -14,8 +14,8 @@ init: ## Full rebuild && doctrine:database drop + migrate
 	$(MAKE) composer install
 	$(PHP_DOCKER_COMPOSE_EXEC) bin/console doctrine:database:drop --force --connection --if-exists
 	$(PHP_DOCKER_COMPOSE_EXEC) bin/console doctrine:database:create
-	$(PHP_DOCKER_COMPOSE_EXEC) bin/console doctrine:migration:migrate --no-interaction
-	$(PHP_DOCKER_COMPOSE_EXEC) bin/console doctrine:fixtures:load --no-interaction
+	$(PHP_DOCKER_COMPOSE_EXEC) bin/console doctrine:migrations:migrate --no-interaction
+	$(PHP_DOCKER_COMPOSE_EXEC) bin/console app:item-template:load
 
 start:	## Start Docker containers && npm install && assets-build && doctrine migrate
 	$(DOCKER_COMPOSE) up -d

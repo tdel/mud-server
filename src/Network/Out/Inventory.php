@@ -1,0 +1,25 @@
+<?php
+
+namespace App\Network\Out;
+
+use App\Auth\Client;
+use App\Network\Telnet\OutputTelnetMessageInterface;
+use App\Network\Telnet\TelnetOutputInterface;
+
+final class Inventory implements OutputTelnetMessageInterface
+{
+    /**
+     * @param string[] $itemNames
+     */
+    public function __construct(
+        private readonly array $itemNames,
+    ) {
+    }
+
+    public function toTelnet(TelnetOutputInterface $output, Client $client): void
+    {
+        $output->write($this->itemNames === []
+            ? "You aren't carrying anything.\n"
+            : sprintf("You are carrying: %s\n", implode(', ', $this->itemNames)));
+    }
+}

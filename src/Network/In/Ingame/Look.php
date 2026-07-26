@@ -46,7 +46,7 @@ final class Look implements TelnetCommandInterface
             static fn (Character $other): string => $other->name,
             array_filter($characters, static fn (Character $other): bool => $other !== $character),
         );
-        $itemNames = array_map(static fn (Item $item): string => $item->name, $items);
+        $itemNames = array_map(static fn (Item $item): string => $item->template->name, $items);
 
         return new RoomDescription($room->name, $room->description, $exitNames, array_values($characterNames), $itemNames);
     }

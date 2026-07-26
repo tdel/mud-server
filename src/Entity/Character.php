@@ -2,6 +2,8 @@
 
 namespace App\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
 
@@ -27,12 +29,16 @@ class Character
     #[ORM\Column]
     private(set) int $health;
 
+    #[ORM\OneToMany(targetEntity: Item::class, mappedBy: 'character')]
+    private(set) Collection $items;
+
     public function __construct(Account $account, Room $currentRoom, string $name, int $health)
     {
         $this->account = $account;
         $this->currentRoom = $currentRoom;
         $this->name = $name;
         $this->health = $health;
+        $this->items = new ArrayCollection();
     }
 
 }

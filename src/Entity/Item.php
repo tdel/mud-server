@@ -14,14 +14,9 @@ class Item
     #[ORM\Column(type: 'uuid', unique: true)]
     private(set) Uuid $id;
 
-    #[ORM\Column(length: 255)]
-    private(set) string $name;
-
-    #[ORM\Column(type: 'text', nullable: true)]
-    private(set) ?string $description = null;
-
-    #[ORM\Column(length: 50)]
-    private(set) string $type; // "key", "tool", "weapon", "potion", etc.
+    #[ORM\ManyToOne(targetEntity: ItemTemplate::class)]
+    #[ORM\JoinColumn(nullable: false)]
+    private(set) ItemTemplate $template;
 
     #[ORM\ManyToOne(targetEntity: Room::class, inversedBy: 'items')]
     private(set) ?Room $room = null;
@@ -29,4 +24,20 @@ class Item
     #[ORM\ManyToOne(targetEntity: Character::class, inversedBy: 'items')]
     private(set) ?Character $character = null;
 
+    public function __construct(ItemTemplate $template)
+    {
+        $this->template = $template;
+    }
+
+    public function moveToRoom(Room $room): void
+    {
+        $this->room = $room;
+        $this->character = null;
+    }
+
+    public function moveToCharacter(Character $character): void
+    {
+        $this->character = $character;
+        $this->room = null;
+    }
 }
