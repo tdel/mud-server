@@ -1,0 +1,49 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Property App\\Entity\\Account\:\:\$characters type mapping mismatch\: property can contain Doctrine\\Common\\Collections\\Collection but database expects Doctrine\\Common\\Collections\\Collection&iterable\<App\\Entity\\Character\>\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/Account.php
+
+		-
+			message: '#^Property App\\Entity\\Character\:\:\$account type mapping mismatch\: database can contain App\\Entity\\Account\|null but property expects App\\Entity\\Account\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/Character.php
+
+		-
+			message: '#^Property App\\Entity\\Character\:\:\$currentRoom type mapping mismatch\: database can contain App\\Entity\\Room\|null but property expects App\\Entity\\Room\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/Character.php
+
+		-
+			message: '#^Property App\\Entity\\Room\:\:\$characters type mapping mismatch\: property can contain Doctrine\\Common\\Collections\\Collection but database expects Doctrine\\Common\\Collections\\Collection&iterable\<App\\Entity\\Character\>\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/Room.php
+
+		-
+			message: '#^Property App\\Entity\\Room\:\:\$exits type mapping mismatch\: property can contain Doctrine\\Common\\Collections\\Collection but database expects Doctrine\\Common\\Collections\\Collection&iterable\<App\\Entity\\RoomExit\>\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/Room.php
+
+		-
+			message: '#^Property App\\Entity\\Room\:\:\$items type mapping mismatch\: property can contain Doctrine\\Common\\Collections\\Collection but database expects Doctrine\\Common\\Collections\\Collection&iterable\<App\\Entity\\Item\>\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/Room.php
+
+		-
+			message: '#^Property App\\Entity\\RoomExit\:\:\$sourceRoom type mapping mismatch\: database can contain App\\Entity\\Room\|null but property expects App\\Entity\\Room\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/RoomExit.php
+
+		-
+			message: '#^Property App\\Entity\\RoomExit\:\:\$targetRoom type mapping mismatch\: database can contain App\\Entity\\Room\|null but property expects App\\Entity\\Room\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/RoomExit.php

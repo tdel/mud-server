@@ -39,6 +39,12 @@ console: ## Run Symfony console eg: make console "ca:c"
 test: ## Execute tests
 	$(PHP_DOCKER_COMPOSE_EXEC) bin/console doctrine:migration:migrate --no-interaction --env=test
 	$(PHP_DOCKER_COMPOSE_EXEC) vendor/bin/phpunit $(filter-out $@,$(MAKECMDGOALS))
+
+lint: ## Run PHPStan static analysis
+	$(PHP_DOCKER_COMPOSE_EXEC) vendor/bin/phpstan analyse
+
+telnet: ## Start the telnet MUD server (foreground)
+	$(PHP_DOCKER_COMPOSE_EXEC) bin/console app:telnet:serve
 %:
 	@:
 

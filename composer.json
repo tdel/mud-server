@@ -13,8 +13,7 @@
         "doctrine/doctrine-bundle": "^3",
         "doctrine/doctrine-migrations-bundle": "^3",
         "doctrine/orm": "^3",
-        "ramsey/uuid-doctrine": "^2.1",
-        "sentry/sentry-symfony": "^5",
+        "react/socket": "^1.17",
         "symfony/cache": "8.1.*",
         "symfony/console": "8.1.*",
         "symfony/dotenv": "8.1.*",
@@ -82,5 +81,8 @@
         }
     },
     "require-dev": {
+        "phpstan/phpstan": "*",
+        "phpstan/phpstan-doctrine": "*",
+        "phpstan/phpstan-symfony": "*"
     }
 }

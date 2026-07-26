@@ -35,11 +35,8 @@
             "migrations/.gitignore"
         ]
     },
-    "ramsey/uuid-doctrine": {
-        "version": "2.1.0"
-    },
-    "sentry/sentry-symfony": {
-        "version": "5.10.0"
+    "phpstan/phpstan": {
+        "version": "2.2.5"
     },
     "symfony/console": {
         "version": "7.4",
