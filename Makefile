@@ -7,15 +7,19 @@ PHP_DOCKER_COMPOSE_EXEC=$(DOCKER_COMPOSE_EXEC) php
 SYMFONY_CONSOLE=$(PHP_DOCKER_COMPOSE_EXEC) bin/console
 
 ## —— Docker 🐳  ———————————————————————————————————————————————————————————————
-init: ## Full rebuild && doctrine:database drop + migrate
+init: ## Full rebuild (cached) && doctrine:database drop + migrate
 	$(DOCKER_COMPOSE) pull
-	$(DOCKER_COMPOSE) build --no-cache
+	$(DOCKER_COMPOSE) build
 	$(DOCKER_COMPOSE) up -d
 	$(MAKE) composer install
 	$(PHP_DOCKER_COMPOSE_EXEC) bin/console doctrine:database:drop --force --connection --if-exists
 	$(PHP_DOCKER_COMPOSE_EXEC) bin/console doctrine:database:create
 	$(PHP_DOCKER_COMPOSE_EXEC) bin/console doctrine:migrations:migrate --no-interaction
 	$(PHP_DOCKER_COMPOSE_EXEC) bin/console app:item-template:load
+
+rebuild: ## Force a full image rebuild without cache
+	$(DOCKER_COMPOSE) build --no-cache php
+	$(DOCKER_COMPOSE) up -d
 
 start:	## Start Docker containers && npm install && assets-build && doctrine migrate
 	$(DOCKER_COMPOSE) up -d
