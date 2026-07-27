@@ -41,8 +41,7 @@ final class Go implements TelnetCommandInterface
         }
 
         $player = $session->player();
-        $character = $player->character();
-        $oldRoom = $character->currentRoom;
+        $oldRoom = $player->currentRoom();
 
         $exit = $this->entityManager->getRepository(RoomExit::class)->findOneBy([
             'sourceRoom' => $oldRoom,
@@ -58,11 +57,6 @@ final class Go implements TelnetCommandInterface
         $newRoom = $exit->targetRoom;
 
         $this->gameWorld->channelFor($oldRoom)->leave($player, $newRoom);
-
-        $character->moveToRoom($newRoom);
-        $this->entityManager->persist($character);
-        $this->entityManager->flush();
-
         $this->gameWorld->channelFor($newRoom)->join($player);
 
         $this->lookCommand->execute($session, '');

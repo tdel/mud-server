@@ -4,6 +4,7 @@ namespace App\Game;
 
 use App\Auth\Client;
 use App\Entity\Character;
+use App\Entity\Room;
 use App\Network\OutputMessageInterface;
 
 /**
@@ -24,6 +25,16 @@ final class Player
     public function character(): Character
     {
         return $this->character;
+    }
+
+    public function currentRoom(): Room
+    {
+        return $this->character->currentRoom;
+    }
+
+    public function moveToRoom(Room $room): void
+    {
+        $this->character->moveToRoom($room);
     }
 
     public function send(OutputMessageInterface $message): void

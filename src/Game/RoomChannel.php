@@ -7,6 +7,7 @@ use App\Network\Out\CharacterDisconnected;
 use App\Network\Out\CharacterJoinedRoom;
 use App\Network\Out\CharacterLeftRoom;
 use App\Network\OutputMessageInterface;
+use Doctrine\ORM\EntityManagerInterface;
 
 /**
  * Holds the players currently present in one room, and lets a command
@@ -18,13 +19,18 @@ final class RoomChannel
     /** @var \SplObjectStorage<Player, null> */
     private \SplObjectStorage $players;
 
-    public function __construct()
-    {
+    public function __construct(
+        private readonly Room $room,
+        private readonly EntityManagerInterface $entityManager,
+    ) {
         $this->players = new \SplObjectStorage();
     }
 
     public function join(Player $player): void
     {
+        $player->moveToRoom($this->room);
+        $this->entityManager->flush();
+
         $this->players->attach($player);
 
         $this->broadcast(new CharacterJoinedRoom($player->character()->name), exclude: $player);

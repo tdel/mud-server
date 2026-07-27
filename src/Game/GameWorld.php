@@ -6,6 +6,7 @@ use App\Entity\Account;
 use App\Entity\Item;
 use App\Entity\ItemTemplate;
 use App\Entity\Room;
+use Doctrine\ORM\EntityManagerInterface;
 
 /**
  * Tracks every player currently in the game world, for as long as the
@@ -22,15 +23,16 @@ final class GameWorld
     /** @var \SplObjectStorage<Player, null> */
     private \SplObjectStorage $players;
 
-    public function __construct()
-    {
+    public function __construct(
+        private readonly EntityManagerInterface $entityManager,
+    ) {
         $this->players = new \SplObjectStorage();
     }
 
     public function enterWorld(Player $player): void
     {
         $this->players->attach($player);
-        $this->channelFor($player->character()->currentRoom)->join($player);
+        $this->channelFor($player->currentRoom())->join($player);
     }
 
     public function exitWorld(Player $player): void
@@ -39,13 +41,13 @@ final class GameWorld
             return;
         }
 
-        $this->channelFor($player->character()->currentRoom)->disconnect($player);
+        $this->channelFor($player->currentRoom())->disconnect($player);
         $this->players->detach($player);
     }
 
     public function channelFor(Room $room): RoomChannel
     {
-        return $this->channels[$room->id->toString()] ??= new RoomChannel();
+        return $this->channels[$room->id->toString()] ??= new RoomChannel($room, $this->entityManager);
     }
 
     public function isAccountConnected(Account $account): bool
