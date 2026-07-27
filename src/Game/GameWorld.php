@@ -39,7 +39,7 @@ final class GameWorld
             return;
         }
 
-        $this->channelFor($player->character()->currentRoom)->leave($player);
+        $this->channelFor($player->character()->currentRoom)->disconnect($player);
         $this->players->detach($player);
     }
 

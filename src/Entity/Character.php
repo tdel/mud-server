@@ -41,4 +41,8 @@ class Character
         $this->items = new ArrayCollection();
     }
 
+    public function moveToRoom(Room $room): void
+    {
+        $this->currentRoom = $room;
+    }
 }

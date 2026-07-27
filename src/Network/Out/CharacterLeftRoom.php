@@ -1,0 +1,21 @@
+<?php
+
+namespace App\Network\Out;
+
+use App\Auth\Client;
+use App\Network\Telnet\OutputTelnetMessageInterface;
+use App\Network\Telnet\TelnetOutputInterface;
+
+final class CharacterLeftRoom implements OutputTelnetMessageInterface
+{
+    public function __construct(
+        private readonly string $characterName,
+        private readonly string $targetRoomName,
+    ) {
+    }
+
+    public function toTelnet(TelnetOutputInterface $output, Client $client): void
+    {
+        $output->write(sprintf("%s est parti vers %s.\n", $this->characterName, $this->targetRoomName));
+    }
+}
