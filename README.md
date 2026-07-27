@@ -7,11 +7,11 @@ A text-based multiplayer game (MUD) server, built on Symfony and reachable over 
 - Players connect over raw TCP/telnet and either `register` a new account or `login` to an existing one.
 - Each account can have several characters; pick one with `character-select` to enter the world.
 - Rooms are connected by one-way exits. Players in the same room can `look` around and `say` things to each other.
-- Everything is persisted to a database (accounts, characters, rooms, items) via Doctrine/MariaDB.
+- Everything is persisted to a database (accounts, characters, rooms, items) via Doctrine/PostgreSQL.
 
 ## Requirements
 
-- Docker and Docker Compose (everything else — PHP, MariaDB, nginx — runs in containers).
+- Docker and Docker Compose (everything else — PHP, PostgreSQL, nginx — runs in containers).
 
 ## Getting started
 

@@ -4,11 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-A MUD (text-based multiplayer game) server built on Symfony 8.1 / PHP 8.5, using Doctrine ORM 3 against MariaDB. Very early stage: `Controller/`, `Repository/`, and `Security/` are currently empty scaffolding.
+A MUD (text-based multiplayer game) server built on Symfony 8.1 / PHP 8.5, using Doctrine ORM 3 against PostgreSQL. Very early stage: `Controller/`, `Repository/`, and `Security/` are currently empty scaffolding.
 
 ## Dev environment (Docker Compose)
 
-Services: `db` (MariaDB), `nginx`, `php` (php-fpm 8.5). All commands run through the Makefile, which wraps `docker compose`:
+Services: `db` (PostgreSQL), `nginx`, `php` (php-fpm 8.5). All commands run through the Makefile, which wraps `docker compose`:
 
 - `make init` — first-time setup: rebuild containers, composer install, drop+recreate DB, run migrations, load fixtures. Destructive — only use for a fresh environment.
 - `make start` / `make stop` / `make restart` — routine container lifecycle.

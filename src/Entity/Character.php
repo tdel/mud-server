@@ -8,7 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
 
 #[ORM\Entity]
-#[ORM\Table(name: '`character`')]
+#[ORM\Table(name: 'character')]
 class Character
 {
     #[ORM\Id]

@@ -25,7 +25,7 @@ RUN install-php-extensions \
     intl \
     memcached\
     pdo \
-    pdo_mysql \
+    pdo_pgsql \
     zip \
     xdebug
 

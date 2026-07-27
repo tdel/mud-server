@@ -68,12 +68,15 @@ final class RetryConnection extends AbstractConnectionMiddleware
         }
     }
 
+    private const array LOST_CONNECTION_SQLSTATES = ['08000', '08001', '08003', '08004', '08006', '57P01', '57P02', '57P03'];
+
     /**
-     * MySQL error codes: 2006 "server has gone away", 2013 "lost connection
-     * during query", 4031 idle-timeout disconnect (MySQL 8+).
+     * PostgreSQL SQLSTATE codes for connection loss/failure (class 08 "Connection
+     * Exception") and admin-initiated disconnects (57P01-57P03: terminated,
+     * crashed, cannot connect now).
      */
     public static function isConnectionLost(DriverException $e): bool
     {
-        return in_array($e->getCode(), [2006, 2013, 4031], true);
+        return in_array($e->getSQLState(), self::LOST_CONNECTION_SQLSTATES, true);
     }
 }
