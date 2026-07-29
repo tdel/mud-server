@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Entity\Enum\EquipmentSlot;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -44,5 +45,14 @@ class Character
     public function moveToRoom(Room $room): void
     {
         $this->currentRoom = $room;
+    }
+
+    public function equip(Item $item, EquipmentSlot $slot): void
+    {
+        if ($item->character !== $this) {
+            throw new \LogicException('Item is not in this character\'s inventory.');
+        }
+
+        $item->equip($slot);
     }
 }
