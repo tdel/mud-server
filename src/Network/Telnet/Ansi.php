@@ -26,6 +26,21 @@ final class Ansi
         return self::wrap($text, '35');
     }
 
+    public static function health(string $text): string
+    {
+        return self::wrap($text, '31');
+    }
+
+    public static function mana(string $text): string
+    {
+        return self::wrap($text, '34');
+    }
+
+    public static function stat(string $text): string
+    {
+        return self::wrap($text, '33');
+    }
+
     private static function wrap(string $text, string $sgrCode): string
     {
         return "\x1b[{$sgrCode}m{$text}" . self::RESET;

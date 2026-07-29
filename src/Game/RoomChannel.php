@@ -2,6 +2,7 @@
 
 namespace App\Game;
 
+use App\Entity\Character;
 use App\Entity\Room;
 use App\Network\Out\Ingame\CharacterDisconnected;
 use App\Network\Out\Ingame\CharacterJoinedRoom;
@@ -48,6 +49,30 @@ final class RoomChannel
         $this->players->detach($player);
 
         $this->broadcast(new CharacterDisconnected($player->character()->name), exclude: $player);
+    }
+
+    public function findCharacterByName(string $name): ?Character
+    {
+        foreach ($this->players as $player) {
+            if (strcasecmp($player->character()->name, $name) === 0) {
+                return $player->character();
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @return Character[]
+     */
+    public function characters(): array
+    {
+        $characters = [];
+        foreach ($this->players as $player) {
+            $characters[] = $player->character();
+        }
+
+        return $characters;
     }
 
     public function broadcast(OutputMessageInterface $message, ?Player $exclude = null): void

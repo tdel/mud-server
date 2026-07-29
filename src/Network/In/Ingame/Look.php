@@ -5,6 +5,7 @@ namespace App\Network\In\Ingame;
 use App\Entity\Character;
 use App\Entity\Item;
 use App\Entity\RoomExit;
+use App\Game\GameWorld;
 use App\Game\Player;
 use App\Network\ConnectionState;
 use App\Network\In\AbstractPlayerAction;
@@ -15,6 +16,7 @@ final class Look extends AbstractPlayerAction
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
+        private readonly GameWorld $gameWorld,
     ) {
     }
 
@@ -38,7 +40,7 @@ final class Look extends AbstractPlayerAction
         $room = $character->currentRoom;
 
         $exits = $this->entityManager->getRepository(RoomExit::class)->findBy(['sourceRoom' => $room]);
-        $characters = $this->entityManager->getRepository(Character::class)->findBy(['currentRoom' => $room]);
+        $characters = $this->gameWorld->channelFor($room)->characters();
         $items = $this->entityManager->getRepository(Item::class)->findBy(['room' => $room]);
 
         $exitNames = array_map(static fn (RoomExit $exit): string => $exit->direction, $exits);

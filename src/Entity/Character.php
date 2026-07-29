@@ -28,17 +28,64 @@ class Character
     private(set) Room $currentRoom;
 
     #[ORM\Column]
-    private(set) int $health;
+    private(set) int $currentHealth;
+
+    #[ORM\Column]
+    private(set) int $maxHealth;
+
+    #[ORM\Column(options: ['default' => 10])]
+    private(set) int $currentMana;
+
+    #[ORM\Column(options: ['default' => 10])]
+    private(set) int $maxMana;
+
+    #[ORM\Column(options: ['default' => 10])]
+    private(set) int $strength;
+
+    #[ORM\Column(options: ['default' => 10])]
+    private(set) int $dexterity;
+
+    #[ORM\Column(options: ['default' => 10])]
+    private(set) int $constitution;
+
+    #[ORM\Column(options: ['default' => 10])]
+    private(set) int $intelligence;
+
+    #[ORM\Column(options: ['default' => 10])]
+    private(set) int $wisdom;
+
+    #[ORM\Column(options: ['default' => 10])]
+    private(set) int $charisma;
 
     #[ORM\OneToMany(targetEntity: Item::class, mappedBy: 'character')]
     private(set) Collection $items;
 
-    public function __construct(Account $account, Room $currentRoom, string $name, int $health)
-    {
+    public function __construct(
+        Account $account,
+        Room $currentRoom,
+        string $name,
+        int $maxHealth,
+        int $maxMana = 10,
+        int $strength = 10,
+        int $dexterity = 10,
+        int $constitution = 10,
+        int $intelligence = 10,
+        int $wisdom = 10,
+        int $charisma = 10,
+    ) {
         $this->account = $account;
         $this->currentRoom = $currentRoom;
         $this->name = $name;
-        $this->health = $health;
+        $this->maxHealth = $maxHealth;
+        $this->currentHealth = $maxHealth;
+        $this->maxMana = $maxMana;
+        $this->currentMana = $maxMana;
+        $this->strength = $strength;
+        $this->dexterity = $dexterity;
+        $this->constitution = $constitution;
+        $this->intelligence = $intelligence;
+        $this->wisdom = $wisdom;
+        $this->charisma = $charisma;
         $this->items = new ArrayCollection();
     }
 
