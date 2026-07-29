@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Network\Telnet;
+namespace App\Network;
 
-enum TelnetState: string
+enum ConnectionState: string
 {
     case Connected = 'connected';
     case Authed = 'authed';

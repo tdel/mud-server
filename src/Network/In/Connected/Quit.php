@@ -2,12 +2,12 @@
 
 namespace App\Network\In\Connected;
 
-use App\Network\In\TelnetCommandInterface;
+use App\Auth\Client;
+use App\Network\ConnectionState;
+use App\Network\In\AbstractClientAction;
 use App\Network\Out\Connected\Goodbye;
-use App\Network\Telnet\TelnetSession;
-use App\Network\Telnet\TelnetState;
 
-final class Quit implements TelnetCommandInterface
+final class Quit extends AbstractClientAction
 {
     public function name(): string
     {
@@ -16,12 +16,12 @@ final class Quit implements TelnetCommandInterface
 
     public function states(): array
     {
-        return [TelnetState::Connected];
+        return [ConnectionState::Connected];
     }
 
-    public function execute(TelnetSession $session, string $argument): void
+    public function onClientAction(Client $client, string $argument): void
     {
-        $session->client()->send(new Goodbye());
-        $session->close();
+        $client->send(new Goodbye());
+        $client->close();
     }
 }

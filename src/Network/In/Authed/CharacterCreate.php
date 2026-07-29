@@ -2,18 +2,18 @@
 
 namespace App\Network\In\Authed;
 
+use App\Auth\Client;
 use App\Entity\Character;
-use App\Network\In\TelnetCommandInterface;
+use App\Network\ConnectionState;
+use App\Network\In\AbstractClientAction;
 use App\Network\Out\Authed\CharacterAlreadyExists;
 use App\Network\Out\Authed\CharacterCreated;
 use App\Network\Out\Authed\NoStartingRoom;
 use App\Network\Out\Usage;
-use App\Network\Telnet\TelnetSession;
-use App\Network\Telnet\TelnetState;
 use App\Repository\RoomRepository;
 use Doctrine\ORM\EntityManagerInterface;
 
-final class CharacterCreate implements TelnetCommandInterface
+final class CharacterCreate extends AbstractClientAction
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
@@ -29,26 +29,27 @@ final class CharacterCreate implements TelnetCommandInterface
 
     public function states(): array
     {
-        return [TelnetState::Authed];
+        return [ConnectionState::Authed];
     }
 
-    public function execute(TelnetSession $session, string $argument): void
+    public function onClientAction(Client $client, string $argument): void
     {
         $name = trim($argument);
 
         if ($name === '') {
-            $session->client()->send(new Usage('character-create <name>'));
-            $this->charactersCommand->execute($session, '');
+            $client->send(new Usage('character-create <name>'));
+            $this->charactersCommand->onClientAction($client, '');
 
             return;
         }
 
-        $account = $session->account();
+        $account = $client->account();
+
         $existing = $this->entityManager->getRepository(Character::class)->findOneBy(['account' => $account, 'name' => $name]);
 
         if ($existing !== null) {
-            $session->client()->send(new CharacterAlreadyExists($name));
-            $this->charactersCommand->execute($session, '');
+            $client->send(new CharacterAlreadyExists($name));
+            $this->charactersCommand->onClientAction($client, '');
 
             return;
         }
@@ -56,8 +57,8 @@ final class CharacterCreate implements TelnetCommandInterface
         $startingRoom = $this->roomRepository->findStartingRoom();
 
         if ($startingRoom === null) {
-            $session->client()->send(new NoStartingRoom());
-            $this->charactersCommand->execute($session, '');
+            $client->send(new NoStartingRoom());
+            $this->charactersCommand->onClientAction($client, '');
 
             return;
         }
@@ -66,7 +67,7 @@ final class CharacterCreate implements TelnetCommandInterface
         $this->entityManager->persist($character);
         $this->entityManager->flush();
 
-        $session->client()->send(new CharacterCreated($name));
-        $this->charactersCommand->execute($session, '');
+        $client->send(new CharacterCreated($name));
+        $this->charactersCommand->onClientAction($client, '');
     }
 }

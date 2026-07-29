@@ -5,13 +5,13 @@ namespace App\Network\In\Ingame;
 use App\Entity\Character;
 use App\Entity\Item;
 use App\Entity\RoomExit;
-use App\Network\In\TelnetCommandInterface;
+use App\Game\Player;
+use App\Network\ConnectionState;
+use App\Network\In\AbstractPlayerAction;
 use App\Network\Out\Ingame\RoomDescription;
-use App\Network\Telnet\TelnetSession;
-use App\Network\Telnet\TelnetState;
 use Doctrine\ORM\EntityManagerInterface;
 
-final class Look implements TelnetCommandInterface
+final class Look extends AbstractPlayerAction
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
@@ -25,12 +25,12 @@ final class Look implements TelnetCommandInterface
 
     public function states(): array
     {
-        return [TelnetState::Ingame];
+        return [ConnectionState::Ingame];
     }
 
-    public function execute(TelnetSession $session, string $argument): void
+    public function onPlayerAction(Player $player, string $argument): void
     {
-        $session->player()->send($this->describeRoom($session->character()));
+        $player->send($this->describeRoom($player->character()));
     }
 
     private function describeRoom(Character $character): RoomDescription

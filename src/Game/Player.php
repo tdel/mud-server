@@ -27,6 +27,11 @@ final class Player
         return $this->character;
     }
 
+    public function client(): Client
+    {
+        return $this->client;
+    }
+
     public function currentRoom(): Room
     {
         return $this->character->currentRoom;

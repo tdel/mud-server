@@ -20,8 +20,8 @@ services:
         resource: '../src/'
 
     _instanceof:
-        App\Network\In\TelnetCommandInterface:
-            tags: ['app.telnet_command']
+        App\Network\In\ActionInterface:
+            tags: ['app.action']
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

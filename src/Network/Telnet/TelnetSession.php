@@ -4,10 +4,9 @@ namespace App\Network\Telnet;
 
 use App\Auth\AuthWorld;
 use App\Auth\Client;
-use App\Entity\Account;
-use App\Entity\Character;
 use App\Game\GameWorld;
-use App\Game\Player;
+use App\Network\ActionDispatcher;
+use App\Network\ConnectionState;
 use Monolog\Attribute\WithMonologChannel;
 use Psr\Log\LoggerInterface;
 use React\Socket\ConnectionInterface;
@@ -20,21 +19,19 @@ final class TelnetSession implements TelnetOutputInterface
 
     private readonly string $sessionId;
     private string $buffer = '';
-    private TelnetState $state = TelnetState::Connected;
     private readonly Client $client;
-    private ?Player $player = null;
     /** @var \Closure(string): void|null */
     private ?\Closure $pendingLine = null;
 
     public function __construct(
         private readonly ConnectionInterface $connection,
-        private readonly TelnetCommandRegistry $commandRegistry,
+        private readonly ActionDispatcher $actionDispatcher,
         private readonly GameWorld $gameWorld,
         private readonly AuthWorld $authWorld,
         private readonly LoggerInterface $logger,
     ) {
         $this->sessionId = Uuid::v7()->toRfc4122();
-        $this->client = new TelnetClient($this);
+        $this->client = new Client($this);
         $this->authWorld->enterWorld($this->client);
 
         $this->logger->info('telnet.connected', [
@@ -54,14 +51,16 @@ final class TelnetSession implements TelnetOutputInterface
             ]);
         });
         $connection->on('close', function (): void {
+            $player = $this->client->player();
+
             $this->logger->info('telnet.disconnected', [
                 'session' => $this->sessionId,
-                'account' => $this->client->account()?->login,
-                'character' => $this->player?->character()->name,
+                'account' => $this->client->accountOrNull()?->login,
+                'character' => $player?->character()->name,
             ]);
 
-            if ($this->player !== null) {
-                $this->gameWorld->exitWorld($this->player);
+            if ($player !== null) {
+                $this->gameWorld->exitWorld($player);
             }
             $this->authWorld->exitWorld($this->client);
         });
@@ -96,16 +95,16 @@ final class TelnetSession implements TelnetOutputInterface
         }
 
         [$name, $argument] = explode(' ', $line, 2) + [1 => ''];
-        $command = $this->commandRegistry->find($this->state, strtolower($name));
+        $action = $this->actionDispatcher->find($this->client->state(), strtolower($name));
 
-        if ($command === null) {
+        if ($action === null) {
             $this->logger->warning('telnet.unknown_command', [
                 'session' => $this->sessionId,
                 'input' => $name,
             ]);
 
             $this->write("Unknown command.\n");
-            if ($this->state !== TelnetState::Connected) {
+            if ($this->client->state() !== ConnectionState::Connected) {
                 $this->write('> ');
             }
 
@@ -114,33 +113,13 @@ final class TelnetSession implements TelnetOutputInterface
 
         $this->logger->info('telnet.command', [
             'session' => $this->sessionId,
-            'account' => $this->client->account()?->login,
-            'character' => $this->player?->character()->name,
-            'command' => $command->name(),
+            'account' => $this->client->accountOrNull()?->login,
+            'character' => $this->client->player()?->character()->name,
+            'command' => $action->name(),
             'argument' => $argument,
         ]);
 
-        $command->execute($this, $argument);
-    }
-
-    public function state(): TelnetState
-    {
-        return $this->state;
-    }
-
-    public function setState(TelnetState $state): void
-    {
-        $this->state = $state;
-    }
-
-    public function setAccount(?Account $account): void
-    {
-        $this->client->setAccount($account);
-    }
-
-    public function setPlayer(?Player $player): void
-    {
-        $this->player = $player;
+        $this->actionDispatcher->dispatch($this->client, $action, $argument);
     }
 
     /**
@@ -176,31 +155,6 @@ final class TelnetSession implements TelnetOutputInterface
     {
         $message->toTelnet($this, $client);
         $this->write('> ');
-    }
-
-    public function client(): Client
-    {
-        return $this->client;
-    }
-
-    public function account(): Account
-    {
-        $account = $this->client->account();
-        \assert($account !== null);
-
-        return $account;
-    }
-
-    public function player(): Player
-    {
-        \assert($this->player !== null);
-
-        return $this->player;
-    }
-
-    public function character(): Character
-    {
-        return $this->player()->character();
     }
 
     public function close(): void

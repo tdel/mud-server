@@ -4,14 +4,14 @@ namespace App\Network\In\Ingame;
 
 use App\Entity\RoomExit;
 use App\Game\GameWorld;
-use App\Network\In\TelnetCommandInterface;
+use App\Game\Player;
+use App\Network\ConnectionState;
+use App\Network\In\AbstractPlayerAction;
 use App\Network\Out\Ingame\NoSuchExit;
 use App\Network\Out\Usage;
-use App\Network\Telnet\TelnetSession;
-use App\Network\Telnet\TelnetState;
 use Doctrine\ORM\EntityManagerInterface;
 
-final class Go implements TelnetCommandInterface
+final class Go extends AbstractPlayerAction
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
@@ -27,20 +27,19 @@ final class Go implements TelnetCommandInterface
 
     public function states(): array
     {
-        return [TelnetState::Ingame];
+        return [ConnectionState::Ingame];
     }
 
-    public function execute(TelnetSession $session, string $argument): void
+    public function onPlayerAction(Player $player, string $argument): void
     {
         $direction = trim($argument);
 
         if ($direction === '') {
-            $session->player()->send(new Usage('go <direction>'));
+            $player->send(new Usage('go <direction>'));
 
             return;
         }
 
-        $player = $session->player();
         $oldRoom = $player->currentRoom();
 
         $exit = $this->entityManager->getRepository(RoomExit::class)->findOneBy([
@@ -59,6 +58,6 @@ final class Go implements TelnetCommandInterface
         $this->gameWorld->channelFor($oldRoom)->leave($player, $newRoom);
         $this->gameWorld->channelFor($newRoom)->join($player);
 
-        $this->lookCommand->execute($session, '');
+        $this->lookCommand->onPlayerAction($player, '');
     }
 }

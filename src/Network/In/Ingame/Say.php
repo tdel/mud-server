@@ -3,14 +3,14 @@
 namespace App\Network\In\Ingame;
 
 use App\Game\GameWorld;
-use App\Network\In\TelnetCommandInterface;
+use App\Game\Player;
+use App\Network\ConnectionState;
+use App\Network\In\AbstractPlayerAction;
 use App\Network\Out\Ingame\Chat;
 use App\Network\Out\Ingame\SayNothing;
 use App\Network\Out\Ingame\YouSaid;
-use App\Network\Telnet\TelnetSession;
-use App\Network\Telnet\TelnetState;
 
-final class Say implements TelnetCommandInterface
+final class Say extends AbstractPlayerAction
 {
     public function __construct(
         private readonly GameWorld $gameWorld,
@@ -24,20 +24,19 @@ final class Say implements TelnetCommandInterface
 
     public function states(): array
     {
-        return [TelnetState::Ingame];
+        return [ConnectionState::Ingame];
     }
 
-    public function execute(TelnetSession $session, string $argument): void
+    public function onPlayerAction(Player $player, string $argument): void
     {
         $message = trim($argument);
 
         if ($message === '') {
-            $session->player()->send(new SayNothing());
+            $player->send(new SayNothing());
 
             return;
         }
 
-        $player = $session->player();
         $character = $player->character();
 
         $this->gameWorld->channelFor($character->currentRoom)->broadcast(

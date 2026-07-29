@@ -3,16 +3,16 @@
 namespace App\Network\In\Ingame;
 
 use App\Entity\Item;
-use App\Network\In\TelnetCommandInterface;
+use App\Game\Player;
+use App\Network\ConnectionState;
+use App\Network\In\AbstractPlayerAction;
 use App\Network\Out\Ingame\ItemEquipped;
 use App\Network\Out\Ingame\ItemNotCarried;
 use App\Network\Out\Ingame\ItemNotEquippable;
 use App\Network\Out\Usage;
-use App\Network\Telnet\TelnetSession;
-use App\Network\Telnet\TelnetState;
 use Doctrine\ORM\EntityManagerInterface;
 
-final class Equip implements TelnetCommandInterface
+final class Equip extends AbstractPlayerAction
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
@@ -26,25 +26,25 @@ final class Equip implements TelnetCommandInterface
 
     public function states(): array
     {
-        return [TelnetState::Ingame];
+        return [ConnectionState::Ingame];
     }
 
-    public function execute(TelnetSession $session, string $argument): void
+    public function onPlayerAction(Player $player, string $argument): void
     {
         $name = trim($argument);
 
         if ($name === '') {
-            $session->player()->send(new Usage('equip <name>'));
+            $player->send(new Usage('equip <name>'));
 
             return;
         }
 
-        $character = $session->character();
+        $character = $player->character();
         $items = $this->entityManager->getRepository(Item::class)->findBy(['character' => $character]);
         $item = $this->findByTemplateName($items, $name);
 
         if ($item === null) {
-            $session->player()->send(new ItemNotCarried($name));
+            $player->send(new ItemNotCarried($name));
 
             return;
         }
@@ -52,7 +52,7 @@ final class Equip implements TelnetCommandInterface
         $slot = $item->template->type->equipmentSlot();
 
         if ($slot === null) {
-            $session->player()->send(new ItemNotEquippable($item->template->name));
+            $player->send(new ItemNotEquippable($item->template->name));
 
             return;
         }
@@ -66,7 +66,7 @@ final class Equip implements TelnetCommandInterface
         $character->equip($item, $slot);
         $this->entityManager->flush();
 
-        $session->player()->send(new ItemEquipped($item->template->name, $slot));
+        $player->send(new ItemEquipped($item->template->name, $slot));
     }
 
     /**

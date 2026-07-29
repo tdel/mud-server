@@ -3,6 +3,7 @@
 namespace App\Auth;
 
 use App\Entity\Account;
+use App\Network\ConnectionState;
 
 /**
  * Tracks every client that is connected but not currently playing (states
@@ -31,7 +32,11 @@ final class AuthWorld
     public function isAccountConnected(Account $account): bool
     {
         foreach ($this->clients as $client) {
-            if ($client->account()?->id->equals($account->id) === true) {
+            if ($client->isState(ConnectionState::Connected)) {
+                continue;
+            }
+
+            if ($client->account()->id->equals($account->id)) {
                 return true;
             }
         }

@@ -2,14 +2,14 @@
 
 namespace App\Network\In\Authed;
 
+use App\Auth\Client;
 use App\Entity\Character;
-use App\Network\In\TelnetCommandInterface;
+use App\Network\ConnectionState;
+use App\Network\In\AbstractClientAction;
 use App\Network\Out\Authed\CharacterList as CharacterListMessage;
-use App\Network\Telnet\TelnetSession;
-use App\Network\Telnet\TelnetState;
 use Doctrine\ORM\EntityManagerInterface;
 
-final class CharacterList implements TelnetCommandInterface
+final class CharacterList extends AbstractClientAction
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
@@ -23,15 +23,17 @@ final class CharacterList implements TelnetCommandInterface
 
     public function states(): array
     {
-        return [TelnetState::Authed];
+        return [ConnectionState::Authed];
     }
 
-    public function execute(TelnetSession $session, string $argument): void
+    public function onClientAction(Client $client, string $argument): void
     {
-        $characters = $this->entityManager->getRepository(Character::class)->findBy(['account' => $session->account()]);
+        $account = $client->account();
+
+        $characters = $this->entityManager->getRepository(Character::class)->findBy(['account' => $account]);
 
         $names = array_map(static fn (Character $character): string => $character->name, $characters);
 
-        $session->client()->send(new CharacterListMessage($names));
+        $client->send(new CharacterListMessage($names));
     }
 }

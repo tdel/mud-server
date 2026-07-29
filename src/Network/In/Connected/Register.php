@@ -2,23 +2,23 @@
 
 namespace App\Network\In\Connected;
 
+use App\Auth\Client;
 use App\Entity\Account;
+use App\Network\ConnectionState;
+use App\Network\In\AbstractClientAction;
 use App\Network\In\Authed\CharacterList;
-use App\Network\In\TelnetCommandInterface;
 use App\Network\Out\Connected\AccountCreated;
 use App\Network\Out\Connected\InvalidPassword;
 use App\Network\Out\Connected\LoginAlreadyTaken;
 use App\Network\Out\Connected\PasswordMismatch;
 use App\Network\Out\Usage;
-use App\Network\Telnet\TelnetSession;
-use App\Network\Telnet\TelnetState;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-final class Register implements TelnetCommandInterface
+final class Register extends AbstractClientAction
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
@@ -35,32 +35,32 @@ final class Register implements TelnetCommandInterface
 
     public function states(): array
     {
-        return [TelnetState::Connected];
+        return [ConnectionState::Connected];
     }
 
-    public function execute(TelnetSession $session, string $argument): void
+    public function onClientAction(Client $client, string $argument): void
     {
         $login = trim($argument);
 
         if ($login === '') {
-            $session->client()->send(new Usage('register <name>'));
+            $client->send(new Usage('register <name>'));
 
             return;
         }
 
         $existing = $this->entityManager->getRepository(Account::class)->findOneBy(['login' => $login]);
         if ($existing !== null) {
-            $session->client()->send(new LoginAlreadyTaken($login));
+            $client->send(new LoginAlreadyTaken($login));
 
             return;
         }
 
-        $session->promptMasked('Password: ', function (string $password) use ($session, $login): void {
-            $this->onPasswordEntered($session, $login, $password);
+        $client->promptMasked('Password: ', function (string $password) use ($client, $login): void {
+            $this->onPasswordEntered($client, $login, $password);
         });
     }
 
-    private function onPasswordEntered(TelnetSession $session, string $login, string $password): void
+    private function onPasswordEntered(Client $client, string $login, string $password): void
     {
         $violations = $this->validator->validate($password, [
             new Assert\NotBlank(),
@@ -73,20 +73,20 @@ final class Register implements TelnetCommandInterface
                 $reasons[] = (string) $violation->getMessage();
             }
 
-            $session->client()->send(new InvalidPassword($reasons));
+            $client->send(new InvalidPassword($reasons));
 
             return;
         }
 
-        $session->promptMasked('Confirm password: ', function (string $confirmation) use ($session, $login, $password): void {
-            $this->onPasswordConfirmed($session, $login, $password, $confirmation);
+        $client->promptMasked('Confirm password: ', function (string $confirmation) use ($client, $login, $password): void {
+            $this->onPasswordConfirmed($client, $login, $password, $confirmation);
         });
     }
 
-    private function onPasswordConfirmed(TelnetSession $session, string $login, string $password, string $confirmation): void
+    private function onPasswordConfirmed(Client $client, string $login, string $password, string $confirmation): void
     {
         if ($password !== $confirmation) {
-            $session->client()->send(new PasswordMismatch());
+            $client->send(new PasswordMismatch());
 
             return;
         }
@@ -98,16 +98,16 @@ final class Register implements TelnetCommandInterface
             $this->entityManager->persist($account);
             $this->entityManager->flush();
         } catch (UniqueConstraintViolationException) {
-            $session->client()->send(new LoginAlreadyTaken($login));
+            $client->send(new LoginAlreadyTaken($login));
 
             return;
         }
 
-        $session->setAccount($account);
-        $session->setPlayer(null);
-        $session->setState(TelnetState::Authed);
+        $client->setAccount($account);
+        $client->setPlayer(null);
+        $client->setState(ConnectionState::Authed);
 
-        $session->client()->send(new AccountCreated($login));
-        $this->charactersCommand->execute($session, '');
+        $client->send(new AccountCreated($login));
+        $this->charactersCommand->onClientAction($client, '');
     }
 }

@@ -2,16 +2,16 @@
 
 namespace App\Network\In\Authed;
 
+use App\Auth\Client;
 use App\Entity\Character;
-use App\Network\In\TelnetCommandInterface;
+use App\Network\ConnectionState;
+use App\Network\In\AbstractClientAction;
 use App\Network\Out\Authed\CharacterDeleted;
 use App\Network\Out\Authed\NoCharacterNamed;
 use App\Network\Out\Usage;
-use App\Network\Telnet\TelnetSession;
-use App\Network\Telnet\TelnetState;
 use Doctrine\ORM\EntityManagerInterface;
 
-final class CharacterDelete implements TelnetCommandInterface
+final class CharacterDelete extends AbstractClientAction
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
@@ -26,26 +26,27 @@ final class CharacterDelete implements TelnetCommandInterface
 
     public function states(): array
     {
-        return [TelnetState::Authed];
+        return [ConnectionState::Authed];
     }
 
-    public function execute(TelnetSession $session, string $argument): void
+    public function onClientAction(Client $client, string $argument): void
     {
         $name = trim($argument);
 
         if ($name === '') {
-            $session->client()->send(new Usage('character-delete <name>'));
-            $this->charactersCommand->execute($session, '');
+            $client->send(new Usage('character-delete <name>'));
+            $this->charactersCommand->onClientAction($client, '');
 
             return;
         }
 
-        $account = $session->account();
+        $account = $client->account();
+
         $character = $this->entityManager->getRepository(Character::class)->findOneBy(['account' => $account, 'name' => $name]);
 
         if ($character === null) {
-            $session->client()->send(new NoCharacterNamed($name));
-            $this->charactersCommand->execute($session, '');
+            $client->send(new NoCharacterNamed($name));
+            $this->charactersCommand->onClientAction($client, '');
 
             return;
         }
@@ -58,7 +59,7 @@ final class CharacterDelete implements TelnetCommandInterface
         $this->entityManager->remove($character);
         $this->entityManager->flush();
 
-        $session->client()->send(new CharacterDeleted($name));
-        $this->charactersCommand->execute($session, '');
+        $client->send(new CharacterDeleted($name));
+        $this->charactersCommand->onClientAction($client, '');
     }
 }

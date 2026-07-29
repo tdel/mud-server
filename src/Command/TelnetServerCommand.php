@@ -5,7 +5,7 @@ namespace App\Command;
 use App\Auth\AuthWorld;
 use App\Game\GameWorld;
 use App\Repository\RoomRepository;
-use App\Network\Telnet\TelnetCommandRegistry;
+use App\Network\ActionDispatcher;
 use App\Network\Telnet\TelnetSession;
 use Monolog\Attribute\WithMonologChannel;
 use Psr\Log\LoggerInterface;
@@ -25,7 +25,7 @@ final class TelnetServerCommand extends Command
 {
     public function __construct(
         private readonly RoomRepository $roomRepository,
-        private readonly TelnetCommandRegistry $commandRegistry,
+        private readonly ActionDispatcher $actionDispatcher,
         private readonly GameWorld $gameWorld,
         private readonly AuthWorld $authWorld,
         private readonly LoggerInterface $logger,
@@ -58,7 +58,7 @@ final class TelnetServerCommand extends Command
         }
 
         $socket->on('connection', function (ConnectionInterface $connection): void {
-            new TelnetSession($connection, $this->commandRegistry, $this->gameWorld, $this->authWorld, $this->logger);
+            new TelnetSession($connection, $this->actionDispatcher, $this->gameWorld, $this->authWorld, $this->logger);
         });
 
         $this->logger->info('telnet.server.started', ['uri' => $uri]);

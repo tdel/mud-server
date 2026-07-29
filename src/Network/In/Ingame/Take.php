@@ -3,15 +3,15 @@
 namespace App\Network\In\Ingame;
 
 use App\Entity\Item;
-use App\Network\In\TelnetCommandInterface;
+use App\Game\Player;
+use App\Network\ConnectionState;
+use App\Network\In\AbstractPlayerAction;
 use App\Network\Out\Ingame\ItemNotFound;
 use App\Network\Out\Ingame\ItemTaken;
 use App\Network\Out\Usage;
-use App\Network\Telnet\TelnetSession;
-use App\Network\Telnet\TelnetState;
 use Doctrine\ORM\EntityManagerInterface;
 
-final class Take implements TelnetCommandInterface
+final class Take extends AbstractPlayerAction
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
@@ -25,25 +25,25 @@ final class Take implements TelnetCommandInterface
 
     public function states(): array
     {
-        return [TelnetState::Ingame];
+        return [ConnectionState::Ingame];
     }
 
-    public function execute(TelnetSession $session, string $argument): void
+    public function onPlayerAction(Player $player, string $argument): void
     {
         $name = trim($argument);
 
         if ($name === '') {
-            $session->player()->send(new Usage('take <name>'));
+            $player->send(new Usage('take <name>'));
 
             return;
         }
 
-        $character = $session->character();
+        $character = $player->character();
         $items = $this->entityManager->getRepository(Item::class)->findBy(['room' => $character->currentRoom]);
         $item = $this->findByTemplateName($items, $name);
 
         if ($item === null) {
-            $session->player()->send(new ItemNotFound($name));
+            $player->send(new ItemNotFound($name));
 
             return;
         }
@@ -51,7 +51,7 @@ final class Take implements TelnetCommandInterface
         $item->moveToCharacter($character);
         $this->entityManager->flush();
 
-        $session->player()->send(new ItemTaken($item->template->name));
+        $player->send(new ItemTaken($item->template->name));
     }
 
     /**

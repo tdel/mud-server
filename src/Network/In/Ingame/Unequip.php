@@ -3,16 +3,16 @@
 namespace App\Network\In\Ingame;
 
 use App\Entity\Item;
-use App\Network\In\TelnetCommandInterface;
+use App\Game\Player;
+use App\Network\ConnectionState;
+use App\Network\In\AbstractPlayerAction;
 use App\Network\Out\Ingame\ItemNotCarried;
 use App\Network\Out\Ingame\ItemNotEquipped;
 use App\Network\Out\Ingame\ItemUnequipped;
 use App\Network\Out\Usage;
-use App\Network\Telnet\TelnetSession;
-use App\Network\Telnet\TelnetState;
 use Doctrine\ORM\EntityManagerInterface;
 
-final class Unequip implements TelnetCommandInterface
+final class Unequip extends AbstractPlayerAction
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
@@ -26,31 +26,31 @@ final class Unequip implements TelnetCommandInterface
 
     public function states(): array
     {
-        return [TelnetState::Ingame];
+        return [ConnectionState::Ingame];
     }
 
-    public function execute(TelnetSession $session, string $argument): void
+    public function onPlayerAction(Player $player, string $argument): void
     {
         $name = trim($argument);
 
         if ($name === '') {
-            $session->player()->send(new Usage('unequip <name>'));
+            $player->send(new Usage('unequip <name>'));
 
             return;
         }
 
-        $character = $session->character();
+        $character = $player->character();
         $items = $this->entityManager->getRepository(Item::class)->findBy(['character' => $character]);
         $item = $this->findByTemplateName($items, $name);
 
         if ($item === null) {
-            $session->player()->send(new ItemNotCarried($name));
+            $player->send(new ItemNotCarried($name));
 
             return;
         }
 
         if ($item->slot === null) {
-            $session->player()->send(new ItemNotEquipped($item->template->name));
+            $player->send(new ItemNotEquipped($item->template->name));
 
             return;
         }
@@ -58,7 +58,7 @@ final class Unequip implements TelnetCommandInterface
         $item->unequip();
         $this->entityManager->flush();
 
-        $session->player()->send(new ItemUnequipped($item->template->name));
+        $player->send(new ItemUnequipped($item->template->name));
     }
 
     /**

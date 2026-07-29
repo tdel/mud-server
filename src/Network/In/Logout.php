@@ -3,16 +3,17 @@
 namespace App\Network\In;
 
 use App\Auth\AuthWorld;
+use App\Auth\Client;
 use App\Game\GameWorld;
+use App\Game\Player;
+use App\Network\ConnectionState;
 use App\Network\Out\LoggedOut;
-use App\Network\Telnet\TelnetSession;
-use App\Network\Telnet\TelnetState;
 
 /**
  * Usable from both the "authed" and "ingame" states: logging out always
- * returns the session directly to "connected".
+ * returns the client directly to "connected".
  */
-final class Logout implements TelnetCommandInterface
+final class Logout implements ActionInterface
 {
     public function __construct(
         private readonly GameWorld $gameWorld,
@@ -27,20 +28,27 @@ final class Logout implements TelnetCommandInterface
 
     public function states(): array
     {
-        return [TelnetState::Authed, TelnetState::Ingame];
+        return [ConnectionState::Authed, ConnectionState::Ingame];
     }
 
-    public function execute(TelnetSession $session, string $argument): void
+    public function onClientAction(Client $client, string $argument): void
     {
-        if ($session->state() === TelnetState::Ingame) {
-            $this->gameWorld->exitWorld($session->player());
-        }
+        $this->finishLogout($client);
+    }
 
-        $session->setAccount(null);
-        $session->setPlayer(null);
-        $this->authWorld->enterWorld($session->client());
-        $session->setState(TelnetState::Connected);
+    public function onPlayerAction(Player $player, string $argument): void
+    {
+        $this->gameWorld->exitWorld($player);
+        $this->finishLogout($player->client());
+    }
 
-        $session->client()->send(new LoggedOut());
+    private function finishLogout(Client $client): void
+    {
+        $client->setAccount(null);
+        $client->setPlayer(null);
+        $this->authWorld->enterWorld($client);
+        $client->setState(ConnectionState::Connected);
+
+        $client->send(new LoggedOut());
     }
 }

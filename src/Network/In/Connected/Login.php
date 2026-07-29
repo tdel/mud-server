@@ -3,21 +3,21 @@
 namespace App\Network\In\Connected;
 
 use App\Auth\AuthWorld;
+use App\Auth\Client;
 use App\Entity\Account;
 use App\Game\GameWorld;
+use App\Network\ConnectionState;
+use App\Network\In\AbstractClientAction;
 use App\Network\In\Authed\CharacterList;
-use App\Network\In\TelnetCommandInterface;
 use App\Network\Out\Connected\AccountAlreadyConnected;
 use App\Network\Out\Connected\AccountNotFound;
 use App\Network\Out\Connected\IncorrectPassword;
 use App\Network\Out\Connected\WelcomeBack;
 use App\Network\Out\Usage;
-use App\Network\Telnet\TelnetSession;
-use App\Network\Telnet\TelnetState;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
-final class Login implements TelnetCommandInterface
+final class Login extends AbstractClientAction
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
@@ -35,15 +35,15 @@ final class Login implements TelnetCommandInterface
 
     public function states(): array
     {
-        return [TelnetState::Connected];
+        return [ConnectionState::Connected];
     }
 
-    public function execute(TelnetSession $session, string $argument): void
+    public function onClientAction(Client $client, string $argument): void
     {
         $login = trim($argument);
 
         if ($login === '') {
-            $session->client()->send(new Usage('login <name>'));
+            $client->send(new Usage('login <name>'));
 
             return;
         }
@@ -51,35 +51,35 @@ final class Login implements TelnetCommandInterface
         $account = $this->entityManager->getRepository(Account::class)->findOneBy(['login' => $login]);
 
         if ($account === null) {
-            $session->client()->send(new AccountNotFound($login));
+            $client->send(new AccountNotFound($login));
 
             return;
         }
 
-        $session->promptMasked('Password: ', function (string $password) use ($session, $account, $login): void {
-            $this->onPasswordEntered($session, $account, $login, $password);
+        $client->promptMasked('Password: ', function (string $password) use ($client, $account, $login): void {
+            $this->onPasswordEntered($client, $account, $login, $password);
         });
     }
 
-    private function onPasswordEntered(TelnetSession $session, Account $account, string $login, string $password): void
+    private function onPasswordEntered(Client $client, Account $account, string $login, string $password): void
     {
         if (!$this->passwordHasher->isPasswordValid($account, $password)) {
-            $session->client()->send(new IncorrectPassword());
+            $client->send(new IncorrectPassword());
 
             return;
         }
 
         if ($this->authWorld->isAccountConnected($account) || $this->gameWorld->isAccountConnected($account)) {
-            $session->client()->send(new AccountAlreadyConnected($login));
+            $client->send(new AccountAlreadyConnected($login));
 
             return;
         }
 
-        $session->setAccount($account);
-        $session->setPlayer(null);
-        $session->setState(TelnetState::Authed);
+        $client->setAccount($account);
+        $client->setPlayer(null);
+        $client->setState(ConnectionState::Authed);
 
-        $session->client()->send(new WelcomeBack($login));
-        $this->charactersCommand->execute($session, '');
+        $client->send(new WelcomeBack($login));
+        $this->charactersCommand->onClientAction($client, '');
     }
 }
