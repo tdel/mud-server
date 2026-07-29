@@ -6,6 +6,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A MUD (text-based multiplayer game) server built on Symfony 8.1 / PHP 8.5, using Doctrine ORM 3 against PostgreSQL. Very early stage: `Controller/`, `Repository/`, and `Security/` are currently empty scaffolding.
 
+## Game rules
+
+The game's mechanics are grounded in Dungeons & Dragons 5th Edition (D&D 5e) — ability scores, races, classes, the d20 dice-resolution system, etc. Rules are ported over incrementally as the game needs them, not all upfront; when implementing a new rule, match the 5e SRD (System Reference Document, freely available online) rather than inventing homebrew mechanics, so the ruleset stays internally consistent as it grows.
+
+Implemented so far: the six ability scores on `Character` (`strength`, `dexterity`, `constitution`, `intelligence`, `wisdom`, `charisma`, default 10), plus separate current/max health and mana pools.
+
 ## Dev environment (Docker Compose)
 
 Services: `db` (PostgreSQL), `nginx`, `php` (php-fpm 8.5). All commands run through the Makefile, which wraps `docker compose`:
