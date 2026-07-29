@@ -3,6 +3,7 @@
 namespace App\Network\Out;
 
 use App\Auth\Client;
+use App\Network\Telnet\Ansi;
 use App\Network\Telnet\OutputTelnetMessageInterface;
 use App\Network\Telnet\TelnetOutputInterface;
 
@@ -26,11 +27,13 @@ final class RoomDescription implements OutputTelnetMessageInterface
     {
         $output->write(sprintf(
             "== %s ==\n%s\n\nExits: %s\nCharacters here: %s\nItems: %s\n",
-            $this->roomName,
+            Ansi::room($this->roomName),
             $this->description,
-            $this->exitNames === [] ? 'none.' : implode(', ', $this->exitNames),
-            $this->characterNames === [] ? 'no one else.' : implode(', ', $this->characterNames),
-            $this->itemNames === [] ? 'none.' : implode(', ', $this->itemNames),
+            $this->exitNames === [] ? 'none.' : implode(', ', array_map(Ansi::direction(...), $this->exitNames)),
+            $this->characterNames === []
+                ? 'no one else.'
+                : implode(', ', array_map(Ansi::character(...), $this->characterNames)),
+            $this->itemNames === [] ? 'none.' : implode(', ', array_map(Ansi::item(...), $this->itemNames)),
         ));
     }
 }

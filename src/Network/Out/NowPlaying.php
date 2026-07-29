@@ -3,6 +3,7 @@
 namespace App\Network\Out;
 
 use App\Auth\Client;
+use App\Network\Telnet\Ansi;
 use App\Network\Telnet\OutputTelnetMessageInterface;
 use App\Network\Telnet\TelnetOutputInterface;
 
@@ -15,6 +16,6 @@ final class NowPlaying implements OutputTelnetMessageInterface
 
     public function toTelnet(TelnetOutputInterface $output, Client $client): void
     {
-        $output->write(sprintf("Now playing %s.\n\n", $this->characterName));
+        $output->write(sprintf("Now playing %s.\n\n", Ansi::character($this->characterName)));
     }
 }

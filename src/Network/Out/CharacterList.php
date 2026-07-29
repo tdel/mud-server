@@ -3,6 +3,7 @@
 namespace App\Network\Out;
 
 use App\Auth\Client;
+use App\Network\Telnet\Ansi;
 use App\Network\Telnet\OutputTelnetMessageInterface;
 use App\Network\Telnet\TelnetOutputInterface;
 
@@ -20,7 +21,7 @@ final class CharacterList implements OutputTelnetMessageInterface
     {
         $output->write($this->names === []
             ? "You have no characters yet. Use \"character-create <name>\" to make one.\n"
-            : sprintf("Characters: %s\n", implode(', ', $this->names)));
+            : sprintf("Characters: %s\n", implode(', ', array_map(Ansi::character(...), $this->names))));
         $output->write("Commands: character-select <name>, character-create <name>, character-delete <name>, logout\n");
     }
 }
