@@ -8,13 +8,17 @@ use App\Entity\Account;
 use App\Entity\Character;
 use App\Game\GameWorld;
 use App\Game\Player;
+use Monolog\Attribute\WithMonologChannel;
 use Psr\Log\LoggerInterface;
 use React\Socket\ConnectionInterface;
+use Symfony\Component\Uid\Uuid;
 
+#[WithMonologChannel('game')]
 final class TelnetSession implements TelnetOutputInterface
 {
     private const int MAX_BUFFER = 1024;
 
+    private readonly string $sessionId;
     private string $buffer = '';
     private TelnetState $state = TelnetState::Connected;
     private readonly Client $client;
@@ -29,8 +33,14 @@ final class TelnetSession implements TelnetOutputInterface
         private readonly AuthWorld $authWorld,
         private readonly LoggerInterface $logger,
     ) {
+        $this->sessionId = Uuid::v7()->toRfc4122();
         $this->client = new TelnetClient($this);
         $this->authWorld->enterWorld($this->client);
+
+        $this->logger->info('telnet.connected', [
+            'session' => $this->sessionId,
+            'remote' => $connection->getRemoteAddress(),
+        ]);
 
         $this->write("Welcome to mud-server.\nType \"login <name>\" or \"register <name>\" to begin.\n");
 
@@ -38,9 +48,18 @@ final class TelnetSession implements TelnetOutputInterface
             $this->onData($chunk);
         });
         $connection->on('error', function (\Throwable $e): void {
-            $this->logger->warning('Telnet connection error', ['exception' => $e]);
+            $this->logger->warning('telnet.connection.error', [
+                'session' => $this->sessionId,
+                'exception' => $e,
+            ]);
         });
         $connection->on('close', function (): void {
+            $this->logger->info('telnet.disconnected', [
+                'session' => $this->sessionId,
+                'account' => $this->client->account()?->login,
+                'character' => $this->player?->character()->name,
+            ]);
+
             if ($this->player !== null) {
                 $this->gameWorld->exitWorld($this->player);
             }
@@ -80,6 +99,11 @@ final class TelnetSession implements TelnetOutputInterface
         $command = $this->commandRegistry->find($this->state, strtolower($name));
 
         if ($command === null) {
+            $this->logger->warning('telnet.unknown_command', [
+                'session' => $this->sessionId,
+                'input' => $name,
+            ]);
+
             $this->write("Unknown command.\n");
             if ($this->state !== TelnetState::Connected) {
                 $this->write('> ');
@@ -87,6 +111,14 @@ final class TelnetSession implements TelnetOutputInterface
 
             return;
         }
+
+        $this->logger->info('telnet.command', [
+            'session' => $this->sessionId,
+            'account' => $this->client->account()?->login,
+            'character' => $this->player?->character()->name,
+            'command' => $command->name(),
+            'argument' => $argument,
+        ]);
 
         $command->execute($this, $argument);
     }

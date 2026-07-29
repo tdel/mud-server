@@ -7,6 +7,7 @@ use App\Game\GameWorld;
 use App\Repository\RoomRepository;
 use App\Network\Telnet\TelnetCommandRegistry;
 use App\Network\Telnet\TelnetSession;
+use Monolog\Attribute\WithMonologChannel;
 use Psr\Log\LoggerInterface;
 use React\EventLoop\Loop;
 use React\Socket\ConnectionInterface;
@@ -19,6 +20,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 #[AsCommand(name: 'app:telnet:serve', description: 'Start the telnet MUD server')]
+#[WithMonologChannel('game')]
 final class TelnetServerCommand extends Command
 {
     public function __construct(
@@ -38,6 +40,7 @@ final class TelnetServerCommand extends Command
         $io = new SymfonyStyle($input, $output);
 
         if ($this->roomRepository->findStartingRoom() === null) {
+            $this->logger->error('telnet.server.no_starting_room');
             $io->error('No starting room is configured. Run "make console app:room:create" first.');
 
             return Command::FAILURE;
@@ -48,6 +51,7 @@ final class TelnetServerCommand extends Command
         try {
             $socket = new SocketServer($uri);
         } catch (\Throwable $e) {
+            $this->logger->error('telnet.server.bind_failed', ['uri' => $uri, 'exception' => $e]);
             $io->error(sprintf('Could not start the telnet server on %s: %s', $uri, $e->getMessage()));
 
             return Command::FAILURE;
@@ -57,6 +61,7 @@ final class TelnetServerCommand extends Command
             new TelnetSession($connection, $this->commandRegistry, $this->gameWorld, $this->authWorld, $this->logger);
         });
 
+        $this->logger->info('telnet.server.started', ['uri' => $uri]);
         $io->success(sprintf('Telnet server started on %s (Ctrl+C to stop).', $uri));
         Loop::run();
 
