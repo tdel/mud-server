@@ -6,7 +6,7 @@ use App\Entity\Character;
 use App\Entity\Item;
 use App\Entity\RoomExit;
 use App\Network\In\TelnetCommandInterface;
-use App\Network\Out\RoomDescription;
+use App\Network\Out\Ingame\RoomDescription;
 use App\Network\Telnet\TelnetSession;
 use App\Network\Telnet\TelnetState;
 use Doctrine\ORM\EntityManagerInterface;

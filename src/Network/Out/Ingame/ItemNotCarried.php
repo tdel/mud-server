@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Network\Out;
+namespace App\Network\Out\Ingame;
 
 use App\Auth\Client;
 use App\Network\Telnet\Ansi;
 use App\Network\Telnet\OutputTelnetMessageInterface;
 use App\Network\Telnet\TelnetOutputInterface;
 
-final class CharacterDeleted implements OutputTelnetMessageInterface
+final class ItemNotCarried implements OutputTelnetMessageInterface
 {
     public function __construct(
         private readonly string $name,
@@ -16,6 +16,6 @@ final class CharacterDeleted implements OutputTelnetMessageInterface
 
     public function toTelnet(TelnetOutputInterface $output, Client $client): void
     {
-        $output->write(sprintf("Character \"%s\" deleted.\n", Ansi::character($this->name)));
+        $output->write(sprintf("You aren't carrying \"%s\".\n", Ansi::item($this->name)));
     }
 }

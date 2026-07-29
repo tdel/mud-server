@@ -1,21 +1,20 @@
 <?php
 
-namespace App\Network\Out;
+namespace App\Network\Out\Connected;
 
 use App\Auth\Client;
-use App\Network\Telnet\Ansi;
 use App\Network\Telnet\OutputTelnetMessageInterface;
 use App\Network\Telnet\TelnetOutputInterface;
 
-final class ItemDropped implements OutputTelnetMessageInterface
+final class WelcomeBack implements OutputTelnetMessageInterface
 {
     public function __construct(
-        private readonly string $name,
+        private readonly string $login,
     ) {
     }
 
     public function toTelnet(TelnetOutputInterface $output, Client $client): void
     {
-        $output->write(sprintf("You drop the %s.\n", Ansi::item($this->name)));
+        $output->write(sprintf("Welcome back, %s!\n\n", $this->login));
     }
 }

@@ -4,8 +4,8 @@ namespace App\Network\In\Ingame;
 
 use App\Entity\Item;
 use App\Network\In\TelnetCommandInterface;
-use App\Network\Out\ItemDropped;
-use App\Network\Out\ItemNotCarried;
+use App\Network\Out\Ingame\ItemDropped;
+use App\Network\Out\Ingame\ItemNotCarried;
 use App\Network\Out\Usage;
 use App\Network\Telnet\TelnetSession;
 use App\Network\Telnet\TelnetState;

@@ -3,7 +3,7 @@
 namespace App\Network\In\Connected;
 
 use App\Network\In\TelnetCommandInterface;
-use App\Network\Out\Goodbye;
+use App\Network\Out\Connected\Goodbye;
 use App\Network\Telnet\TelnetSession;
 use App\Network\Telnet\TelnetState;
 

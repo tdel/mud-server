@@ -1,21 +1,21 @@
 <?php
 
-namespace App\Network\Out;
+namespace App\Network\Out\Authed;
 
 use App\Auth\Client;
 use App\Network\Telnet\Ansi;
 use App\Network\Telnet\OutputTelnetMessageInterface;
 use App\Network\Telnet\TelnetOutputInterface;
 
-final class CharacterJoinedRoom implements OutputTelnetMessageInterface
+final class CharacterCreated implements OutputTelnetMessageInterface
 {
     public function __construct(
-        private readonly string $characterName,
+        private readonly string $name,
     ) {
     }
 
     public function toTelnet(TelnetOutputInterface $output, Client $client): void
     {
-        $output->write(sprintf("%s vous a rejoint.\n", Ansi::character($this->characterName)));
+        $output->write(sprintf("Character \"%s\" created.\n", Ansi::character($this->name)));
     }
 }

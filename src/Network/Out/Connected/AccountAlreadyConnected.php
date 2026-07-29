@@ -1,20 +1,20 @@
 <?php
 
-namespace App\Network\Out;
+namespace App\Network\Out\Connected;
 
 use App\Auth\Client;
 use App\Network\Telnet\OutputTelnetMessageInterface;
 use App\Network\Telnet\TelnetOutputInterface;
 
-final class YouSaid implements OutputTelnetMessageInterface
+final class AccountAlreadyConnected implements OutputTelnetMessageInterface
 {
     public function __construct(
-        private readonly string $text,
+        private readonly string $login,
     ) {
     }
 
     public function toTelnet(TelnetOutputInterface $output, Client $client): void
     {
-        $output->write(sprintf("You say: %s\n", $this->text));
+        $output->write(sprintf("The account \"%s\" is already connected.\n", $this->login));
     }
 }

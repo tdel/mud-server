@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Network\Out;
+namespace App\Network\Out\Connected;
 
 use App\Auth\Client;
 use App\Network\Telnet\OutputTelnetMessageInterface;
 use App\Network\Telnet\TelnetOutputInterface;
 
-final class AccountNotFound implements OutputTelnetMessageInterface
+final class AccountCreated implements OutputTelnetMessageInterface
 {
     public function __construct(
         private readonly string $login,
@@ -15,6 +15,6 @@ final class AccountNotFound implements OutputTelnetMessageInterface
 
     public function toTelnet(TelnetOutputInterface $output, Client $client): void
     {
-        $output->write(sprintf("No account found for \"%s\". Use \"register %s\" to create one.\n", $this->login, $this->login));
+        $output->write(sprintf("Account \"%s\" created.\n\n", $this->login));
     }
 }

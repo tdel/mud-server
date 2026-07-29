@@ -1,15 +1,15 @@
 <?php
 
-namespace App\Network\Out;
+namespace App\Network\Out\Connected;
 
 use App\Auth\Client;
 use App\Network\Telnet\OutputTelnetMessageInterface;
 use App\Network\Telnet\TelnetOutputInterface;
 
-final class SayNothing implements OutputTelnetMessageInterface
+final class PasswordMismatch implements OutputTelnetMessageInterface
 {
     public function toTelnet(TelnetOutputInterface $output, Client $client): void
     {
-        $output->write("Say what?\n");
+        $output->write("Passwords didn't match.\n");
     }
 }

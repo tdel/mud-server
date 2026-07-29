@@ -4,9 +4,9 @@ namespace App\Network\In\Authed;
 
 use App\Entity\Character;
 use App\Network\In\TelnetCommandInterface;
-use App\Network\Out\CharacterAlreadyExists;
-use App\Network\Out\CharacterCreated;
-use App\Network\Out\NoStartingRoom;
+use App\Network\Out\Authed\CharacterAlreadyExists;
+use App\Network\Out\Authed\CharacterCreated;
+use App\Network\Out\Authed\NoStartingRoom;
 use App\Network\Out\Usage;
 use App\Network\Telnet\TelnetSession;
 use App\Network\Telnet\TelnetState;

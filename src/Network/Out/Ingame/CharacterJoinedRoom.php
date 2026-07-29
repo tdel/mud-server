@@ -1,21 +1,21 @@
 <?php
 
-namespace App\Network\Out;
+namespace App\Network\Out\Ingame;
 
 use App\Auth\Client;
 use App\Network\Telnet\Ansi;
 use App\Network\Telnet\OutputTelnetMessageInterface;
 use App\Network\Telnet\TelnetOutputInterface;
 
-final class NoCharacterNamed implements OutputTelnetMessageInterface
+final class CharacterJoinedRoom implements OutputTelnetMessageInterface
 {
     public function __construct(
-        private readonly string $name,
+        private readonly string $characterName,
     ) {
     }
 
     public function toTelnet(TelnetOutputInterface $output, Client $client): void
     {
-        $output->write(sprintf("No character named \"%s\".\n", Ansi::character($this->name)));
+        $output->write(sprintf("%s vous a rejoint.\n", Ansi::character($this->characterName)));
     }
 }

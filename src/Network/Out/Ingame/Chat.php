@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Network\Out;
+namespace App\Network\Out\Ingame;
 
 use App\Auth\Client;
 use App\Network\Telnet\Ansi;

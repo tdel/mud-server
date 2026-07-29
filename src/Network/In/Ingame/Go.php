@@ -5,7 +5,7 @@ namespace App\Network\In\Ingame;
 use App\Entity\RoomExit;
 use App\Game\GameWorld;
 use App\Network\In\TelnetCommandInterface;
-use App\Network\Out\NoSuchExit;
+use App\Network\Out\Ingame\NoSuchExit;
 use App\Network\Out\Usage;
 use App\Network\Telnet\TelnetSession;
 use App\Network\Telnet\TelnetState;

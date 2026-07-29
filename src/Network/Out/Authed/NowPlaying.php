@@ -1,20 +1,21 @@
 <?php
 
-namespace App\Network\Out;
+namespace App\Network\Out\Authed;
 
 use App\Auth\Client;
+use App\Network\Telnet\Ansi;
 use App\Network\Telnet\OutputTelnetMessageInterface;
 use App\Network\Telnet\TelnetOutputInterface;
 
-final class LoginAlreadyTaken implements OutputTelnetMessageInterface
+final class NowPlaying implements OutputTelnetMessageInterface
 {
     public function __construct(
-        private readonly string $login,
+        private readonly string $characterName,
     ) {
     }
 
     public function toTelnet(TelnetOutputInterface $output, Client $client): void
     {
-        $output->write(sprintf("The login \"%s\" is already taken.\n", $this->login));
+        $output->write(sprintf("Now playing %s.\n\n", Ansi::character($this->characterName)));
     }
 }

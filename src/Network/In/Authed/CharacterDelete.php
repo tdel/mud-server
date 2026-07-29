@@ -4,8 +4,8 @@ namespace App\Network\In\Authed;
 
 use App\Entity\Character;
 use App\Network\In\TelnetCommandInterface;
-use App\Network\Out\CharacterDeleted;
-use App\Network\Out\NoCharacterNamed;
+use App\Network\Out\Authed\CharacterDeleted;
+use App\Network\Out\Authed\NoCharacterNamed;
 use App\Network\Out\Usage;
 use App\Network\Telnet\TelnetSession;
 use App\Network\Telnet\TelnetState;

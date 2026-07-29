@@ -4,9 +4,9 @@ namespace App\Network\In\Ingame;
 
 use App\Game\GameWorld;
 use App\Network\In\TelnetCommandInterface;
-use App\Network\Out\Chat;
-use App\Network\Out\SayNothing;
-use App\Network\Out\YouSaid;
+use App\Network\Out\Ingame\Chat;
+use App\Network\Out\Ingame\SayNothing;
+use App\Network\Out\Ingame\YouSaid;
 use App\Network\Telnet\TelnetSession;
 use App\Network\Telnet\TelnetState;
 

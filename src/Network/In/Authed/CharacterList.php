@@ -4,7 +4,7 @@ namespace App\Network\In\Authed;
 
 use App\Entity\Character;
 use App\Network\In\TelnetCommandInterface;
-use App\Network\Out\CharacterList as CharacterListMessage;
+use App\Network\Out\Authed\CharacterList as CharacterListMessage;
 use App\Network\Telnet\TelnetSession;
 use App\Network\Telnet\TelnetState;
 use Doctrine\ORM\EntityManagerInterface;

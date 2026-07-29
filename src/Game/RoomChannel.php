@@ -3,9 +3,9 @@
 namespace App\Game;
 
 use App\Entity\Room;
-use App\Network\Out\CharacterDisconnected;
-use App\Network\Out\CharacterJoinedRoom;
-use App\Network\Out\CharacterLeftRoom;
+use App\Network\Out\Ingame\CharacterDisconnected;
+use App\Network\Out\Ingame\CharacterJoinedRoom;
+use App\Network\Out\Ingame\CharacterLeftRoom;
 use App\Network\OutputMessageInterface;
 use Doctrine\ORM\EntityManagerInterface;
 

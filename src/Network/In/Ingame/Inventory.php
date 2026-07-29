@@ -4,7 +4,7 @@ namespace App\Network\In\Ingame;
 
 use App\Entity\Item;
 use App\Network\In\TelnetCommandInterface;
-use App\Network\Out\Inventory as InventoryMessage;
+use App\Network\Out\Ingame\Inventory as InventoryMessage;
 use App\Network\Telnet\TelnetSession;
 use App\Network\Telnet\TelnetState;
 use Doctrine\ORM\EntityManagerInterface;

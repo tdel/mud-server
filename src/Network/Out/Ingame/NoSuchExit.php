@@ -1,21 +1,21 @@
 <?php
 
-namespace App\Network\Out;
+namespace App\Network\Out\Ingame;
 
 use App\Auth\Client;
 use App\Network\Telnet\Ansi;
 use App\Network\Telnet\OutputTelnetMessageInterface;
 use App\Network\Telnet\TelnetOutputInterface;
 
-final class CharacterAlreadyExists implements OutputTelnetMessageInterface
+final class NoSuchExit implements OutputTelnetMessageInterface
 {
     public function __construct(
-        private readonly string $name,
+        private readonly string $direction,
     ) {
     }
 
     public function toTelnet(TelnetOutputInterface $output, Client $client): void
     {
-        $output->write(sprintf("You already have a character named \"%s\".\n", Ansi::character($this->name)));
+        $output->write(sprintf("No exit to the \"%s\".\n", Ansi::direction($this->direction)));
     }
 }

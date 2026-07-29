@@ -1,21 +1,21 @@
 <?php
 
-namespace App\Network\Out;
+namespace App\Network\Out\Authed;
 
 use App\Auth\Client;
 use App\Network\Telnet\Ansi;
 use App\Network\Telnet\OutputTelnetMessageInterface;
 use App\Network\Telnet\TelnetOutputInterface;
 
-final class CharacterDisconnected implements OutputTelnetMessageInterface
+final class NoCharacterNamed implements OutputTelnetMessageInterface
 {
     public function __construct(
-        private readonly string $characterName,
+        private readonly string $name,
     ) {
     }
 
     public function toTelnet(TelnetOutputInterface $output, Client $client): void
     {
-        $output->write(sprintf("%s s'est déconnecté.\n", Ansi::character($this->characterName)));
+        $output->write(sprintf("No character named \"%s\".\n", Ansi::character($this->name)));
     }
 }

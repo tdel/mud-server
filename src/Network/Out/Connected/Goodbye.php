@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Network\Out;
+namespace App\Network\Out\Connected;
 
 use App\Auth\Client;
 use App\Network\Telnet\OutputTelnetMessageInterface;
