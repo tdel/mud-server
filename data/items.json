@@ -10,5 +10,11 @@
         "name": "Epée courte",
         "type": "weapon",
         "weight": 1
+    },
+    {
+        "id": "019faec6-116d-723d-b04c-76d51a2a2cb7",
+        "name": "Casque de fer",
+        "type": "helmet",
+        "weight": 2
     }
 ]
