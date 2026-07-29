@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use App\Entity\Enum\EquipmentSlot;
+use App\Entity\Enum\Race;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -26,6 +27,9 @@ class Character
 
     #[ORM\ManyToOne(targetEntity: Room::class, inversedBy: 'characters')]
     private(set) Room $currentRoom;
+
+    #[ORM\Column(length: 20, enumType: Race::class)]
+    private(set) Race $race;
 
     #[ORM\Column]
     private(set) int $currentHealth;
@@ -64,6 +68,7 @@ class Character
         Account $account,
         Room $currentRoom,
         string $name,
+        Race $race,
         int $maxHealth,
         int $maxMana = 10,
         int $strength = 10,
@@ -76,6 +81,7 @@ class Character
         $this->account = $account;
         $this->currentRoom = $currentRoom;
         $this->name = $name;
+        $this->race = $race;
         $this->maxHealth = $maxHealth;
         $this->currentHealth = $maxHealth;
         $this->maxMana = $maxMana;
