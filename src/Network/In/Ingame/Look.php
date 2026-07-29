@@ -40,7 +40,7 @@ final class Look extends AbstractPlayerAction
         $room = $character->currentRoom;
 
         $exits = $this->entityManager->getRepository(RoomExit::class)->findBy(['sourceRoom' => $room]);
-        $characters = $this->gameWorld->channelFor($room)->characters();
+        $characters = $this->gameWorld->roomInstance($room)->characters();
         $items = $this->entityManager->getRepository(Item::class)->findBy(['room' => $room]);
 
         $exitNames = array_map(static fn (RoomExit $exit): string => $exit->direction, $exits);

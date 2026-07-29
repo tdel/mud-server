@@ -55,8 +55,8 @@ final class Go extends AbstractPlayerAction
 
         $newRoom = $exit->targetRoom;
 
-        $this->gameWorld->channelFor($oldRoom)->leave($player, $newRoom);
-        $this->gameWorld->channelFor($newRoom)->join($player);
+        $this->gameWorld->roomInstance($oldRoom)->leave($player, $newRoom);
+        $this->gameWorld->roomInstance($newRoom)->join($player);
 
         $this->lookCommand->onPlayerAction($player, '');
     }

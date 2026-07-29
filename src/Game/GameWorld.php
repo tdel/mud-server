@@ -17,8 +17,8 @@ use Doctrine\ORM\EntityManagerInterface;
  */
 final class GameWorld
 {
-    /** @var array<string, RoomChannel> */
-    private array $channels = [];
+    /** @var array<string, RoomInstance> */
+    private array $roomInstances = [];
 
     /** @var \SplObjectStorage<Player, null> */
     private \SplObjectStorage $players;
@@ -32,7 +32,7 @@ final class GameWorld
     public function enterWorld(Player $player): void
     {
         $this->players->attach($player);
-        $this->channelFor($player->currentRoom())->join($player);
+        $this->roomInstance($player->currentRoom())->join($player);
     }
 
     public function exitWorld(Player $player): void
@@ -41,13 +41,13 @@ final class GameWorld
             return;
         }
 
-        $this->channelFor($player->currentRoom())->disconnect($player);
+        $this->roomInstance($player->currentRoom())->disconnect($player);
         $this->players->detach($player);
     }
 
-    public function channelFor(Room $room): RoomChannel
+    public function roomInstance(Room $room): RoomInstance
     {
-        return $this->channels[$room->id->toString()] ??= new RoomChannel($room, $this->entityManager);
+        return $this->roomInstances[$room->id->toString()] ??= new RoomInstance($room, $this->entityManager);
     }
 
     public function isAccountConnected(Account $account): bool

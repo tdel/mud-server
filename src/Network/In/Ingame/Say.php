@@ -39,7 +39,7 @@ final class Say extends AbstractPlayerAction
 
         $character = $player->character();
 
-        $this->gameWorld->channelFor($character->currentRoom)->broadcast(
+        $this->gameWorld->roomInstance($character->currentRoom)->broadcast(
             new Chat($character->name, $message),
             exclude: $player,
         );

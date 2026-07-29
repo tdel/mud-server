@@ -37,7 +37,7 @@ final class Examine extends AbstractPlayerAction
             return;
         }
 
-        $target = $this->gameWorld->channelFor($player->currentRoom())->findCharacterByName($name);
+        $target = $this->gameWorld->roomInstance($player->currentRoom())->findCharacterByName($name);
 
         if ($target === null) {
             $player->send(new CharacterNotFound($name));

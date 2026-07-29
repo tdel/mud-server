@@ -15,7 +15,7 @@ use Doctrine\ORM\EntityManagerInterface;
  * broadcast a message to everyone in it. Joining/leaving always notifies
  * the room, so callers never need to remember to do it themselves.
  */
-final class RoomChannel
+final class RoomInstance
 {
     /** @var \SplObjectStorage<Player, null> */
     private \SplObjectStorage $players;
