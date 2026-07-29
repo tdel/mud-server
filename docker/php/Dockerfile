@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM php:8.5-fpm
+FROM php:8.5-cli
 ARG TIMEZONE=Europe/Paris
 ENV PHP_MEMORY_LIMIT=128M
 
@@ -27,3 +27,5 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     xdebug
 
 WORKDIR "/var/www"
+
+CMD ["sleep", "infinity"]

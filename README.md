@@ -11,7 +11,7 @@ A text-based multiplayer game (MUD) server, built on Symfony and reachable over 
 
 ## Requirements
 
-- Docker and Docker Compose (everything else — PHP, PostgreSQL, nginx — runs in containers).
+- Docker and Docker Compose (everything else — PHP, PostgreSQL — runs in containers).
 
 ## Getting started
 
