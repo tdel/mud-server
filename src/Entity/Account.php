@@ -6,10 +6,11 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 #[ORM\Entity]
-class Account implements UserInterface
+class Account implements UserInterface, PasswordAuthenticatedUserInterface
 {
 
     #[ORM\Id]
@@ -18,8 +19,11 @@ class Account implements UserInterface
     #[ORM\Column(type: 'uuid', unique: true)]
     private(set) Uuid $id;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, unique: true)]
     private(set) string $login;
+
+    #[ORM\Column(length: 255)]
+    private(set) string $password;
 
     #[ORM\OneToMany(targetEntity: Character::class, mappedBy: 'account')]
     private(set) Collection $characters;
@@ -31,6 +35,16 @@ class Account implements UserInterface
     {
         $this->login = $login;
         $this->characters = new ArrayCollection();
+    }
+
+    public function setPassword(string $hashedPassword): void
+    {
+        $this->password = $hashedPassword;
+    }
+
+    public function getPassword(): string
+    {
+        return $this->password;
     }
 
     public function setCurrentCharacter(Character $character): void

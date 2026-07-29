@@ -19,6 +19,8 @@ final class TelnetSession implements TelnetOutputInterface
     private TelnetState $state = TelnetState::Connected;
     private readonly Client $client;
     private ?Player $player = null;
+    /** @var \Closure(string): void|null */
+    private ?\Closure $pendingLine = null;
 
     public function __construct(
         private readonly ConnectionInterface $connection,
@@ -66,6 +68,14 @@ final class TelnetSession implements TelnetOutputInterface
 
     private function handleLine(string $line): void
     {
+        if ($this->pendingLine !== null) {
+            $handler = $this->pendingLine;
+            $this->pendingLine = null;
+            $handler($line);
+
+            return;
+        }
+
         [$name, $argument] = explode(' ', $line, 2) + [1 => ''];
         $command = $this->commandRegistry->find($this->state, strtolower($name));
 
@@ -99,6 +109,35 @@ final class TelnetSession implements TelnetOutputInterface
     public function setPlayer(?Player $player): void
     {
         $this->player = $player;
+    }
+
+    /**
+     * @param \Closure(string): void $handler
+     */
+    public function awaitLine(\Closure $handler): void
+    {
+        $this->pendingLine = $handler;
+    }
+
+    /**
+     * Writes $prompt with client-side echo suppressed, then captures the
+     * next raw line as $onLine's argument. Echo is always restored right
+     * before $onLine runs, regardless of which branch it takes. Since the
+     * client never echoed the user's Enter keypress while echo was off, we
+     * emit our own newline so whatever $onLine writes starts on a fresh
+     * line instead of being appended right after the prompt.
+     *
+     * @param \Closure(string): void $onLine
+     */
+    public function promptMasked(string $prompt, \Closure $onLine): void
+    {
+        $this->write(TelnetEcho::OFF);
+        $this->write($prompt);
+        $this->awaitLine(function (string $line) use ($onLine): void {
+            $this->write(TelnetEcho::ON);
+            $this->write("\n");
+            $onLine($line);
+        });
     }
 
     public function send(OutputTelnetMessageInterface $message, Client $client): void
