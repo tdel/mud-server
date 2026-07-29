@@ -83,6 +83,7 @@
     "require-dev": {
         "phpstan/phpstan": "*",
         "phpstan/phpstan-doctrine": "*",
-        "phpstan/phpstan-symfony": "*"
+        "phpstan/phpstan-symfony": "*",
+        "squizlabs/php_codesniffer": "*"
     }
 }

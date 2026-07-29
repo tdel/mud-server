@@ -47,6 +47,12 @@ test: ## Execute tests
 lint: ## Run PHPStan static analysis
 	$(PHP_DOCKER_COMPOSE_EXEC) vendor/bin/phpstan analyse
 
+phpcs: ## Run PHP_CodeSniffer code style check
+	$(PHP_DOCKER_COMPOSE_EXEC) vendor/bin/phpcs
+
+phpcbf: ## Auto-fix PHP_CodeSniffer violations where possible
+	$(PHP_DOCKER_COMPOSE_EXEC) vendor/bin/phpcbf
+
 telnet: ## Start the telnet MUD server (foreground)
 	$(PHP_DOCKER_COMPOSE_EXEC) bin/console app:telnet:serve
 %:

@@ -42,3 +42,4 @@
 
 /.idea/
 /docker/build/
+/.phpcs-cache

@@ -53,5 +53,4 @@ class Room
     {
         $this->isStartingRoom = null;
     }
-
 }

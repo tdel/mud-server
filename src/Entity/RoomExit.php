@@ -22,6 +22,4 @@ class RoomExit
 
     #[ORM\Column]
     private(set) string $direction; // "nord", "sud", etc.
-
-
 }

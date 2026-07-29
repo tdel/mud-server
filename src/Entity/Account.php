@@ -12,7 +12,6 @@ use Symfony\Component\Security\Core\User\UserInterface;
 #[ORM\Entity]
 class Account implements UserInterface, PasswordAuthenticatedUserInterface
 {
-
     #[ORM\Id]
     #[ORM\GeneratedValue(strategy: 'CUSTOM')]
     #[ORM\CustomIdGenerator(class: \Symfony\Bridge\Doctrine\IdGenerator\UuidGenerator::class)]
