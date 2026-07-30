@@ -14,7 +14,7 @@ Implemented so far: the six ability scores on `Character` (`strength`, `dexterit
 
 ## Dev environment (Docker Compose)
 
-Services: `db` (PostgreSQL), `nginx`, `php` (php-fpm 8.5). All commands run through the Makefile, which wraps `docker compose`:
+Services: `db` (PostgreSQL), `php` (php-fpm 8.5). All commands run through the Makefile, which wraps `docker compose`:
 
 - `make init` — first-time setup: rebuild containers, composer install, drop+recreate DB, run migrations, load fixtures. Destructive — only use for a fresh environment.
 - `make start` / `make stop` / `make restart` — routine container lifecycle.
@@ -44,7 +44,7 @@ Domain model: `Account` (the Symfony `UserInterface`) has many `Character`s and 
 
 ## Auth
 
-The `main` security firewall uses `access_token` authentication (bearer-token style, not form/session login) via `App\Security\AccessTokenHandler` — this class doesn't exist yet, so the security config won't compile as-is until it's added.
+This is a telnet-only app — no HTTP request ever reaches it, so `symfony/security-bundle`'s firewall/provider/access_control machinery is unused; `config/packages/security.yaml` only keeps `password_hashers:` (used by `Login`/`Register` via `UserPasswordHasherInterface`, invoked manually from telnet prompt callbacks) and a minimal `firewalls.main` placeholder required by the bundle's config schema.
 
 ## Static analysis
 
