@@ -81,9 +81,11 @@
         }
     },
     "require-dev": {
+        "dama/doctrine-test-bundle": "^8.6",
         "phpstan/phpstan": "*",
         "phpstan/phpstan-doctrine": "*",
         "phpstan/phpstan-symfony": "*",
+        "phpunit/phpunit": "^13.2",
         "squizlabs/php_codesniffer": "*"
     }
 }

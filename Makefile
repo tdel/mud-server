@@ -41,7 +41,8 @@ console: ## Run Symfony console eg: make console "ca:c"
 	$(PHP_DOCKER_COMPOSE_EXEC) bin/console $(filter-out $@,$(MAKECMDGOALS))
 
 test: ## Execute tests
-	$(PHP_DOCKER_COMPOSE_EXEC) bin/console doctrine:migration:migrate --no-interaction --env=test
+	$(PHP_DOCKER_COMPOSE_EXEC) bin/console doctrine:database:create --env=test --if-not-exists
+	$(PHP_DOCKER_COMPOSE_EXEC) bin/console doctrine:migrations:migrate --no-interaction --env=test
 	$(PHP_DOCKER_COMPOSE_EXEC) vendor/bin/phpunit $(filter-out $@,$(MAKECMDGOALS))
 
 lint: ## Run PHPStan static analysis
