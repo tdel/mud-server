@@ -2,22 +2,25 @@
 
 namespace App\Network\In;
 
-use App\Auth\AuthWorld;
-use App\Auth\Client;
+use App\Game\AuthWorld;
 use App\Game\GameWorld;
-use App\Game\Player;
 use App\Network\ConnectionState;
+use App\Network\In\Authed\CharacterList;
+use App\Network\Out\Authed\StoppedPlaying;
 use App\Network\Out\LoggedOut;
+use App\Network\UserInterface;
 
 /**
- * Usable from both the "authed" and "ingame" states: logging out always
- * returns the client directly to "connected".
+ * Usable from both the "authed" and "ingame" states. From "ingame", logging
+ * out only drops the character and returns to character selection ("authed").
+ * From "authed", logging out returns all the way to "connected".
  */
 final class Logout implements ActionInterface
 {
     public function __construct(
         private readonly GameWorld $gameWorld,
         private readonly AuthWorld $authWorld,
+        private readonly CharacterList $characterListAction,
     ) {
     }
 
@@ -31,24 +34,34 @@ final class Logout implements ActionInterface
         return [ConnectionState::Authed, ConnectionState::Ingame];
     }
 
-    public function onClientAction(Client $client, string $argument): void
+    public function onReceive(UserInterface $user, string $argument): void
     {
-        $this->finishLogout($client);
+
+        // Dans le cas où on est en jeu, on revient dans le monde de sélection du personnage.
+        if ($user->state() === ConnectionState::Ingame) {
+            $characterName = $user->player()->character()->name;
+
+            $this->gameWorld->exitWorld($user->player());
+            $this->authWorld->enterWorld($user);
+
+            $user->send(new StoppedPlaying($characterName));
+
+            $this->characterListAction->onReceive($user, '');
+
+            return;
+        }
+
+        // Si on est dans le monde de sélection du personnage et qu'on souhaite se deloguer, on sort complètement
+        // de ce monde et on repasse en "connected", nécessitant de se reloguer.
+        if ($user->state() === ConnectionState::Authed) {
+            $this->authWorld->exitWorld($user);
+            $user->send(new LoggedOut());
+
+            return;
+        }
+
+        throw new \Exception('not handled !');
+
     }
 
-    public function onPlayerAction(Player $player, string $argument): void
-    {
-        $this->gameWorld->exitWorld($player);
-        $this->finishLogout($player->client());
-    }
-
-    private function finishLogout(Client $client): void
-    {
-        $client->setAccount(null);
-        $client->setPlayer(null);
-        $this->authWorld->enterWorld($client);
-        $client->setState(ConnectionState::Connected);
-
-        $client->send(new LoggedOut());
-    }
 }

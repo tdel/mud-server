@@ -2,14 +2,13 @@
 
 namespace App\Network\In\Authed;
 
-use App\Auth\Client;
 use App\Entity\Account;
 use App\Entity\Character;
 use App\Entity\Enum\Race;
 use App\Entity\Room;
 use App\Game\Dice\DiceRoller;
 use App\Network\ConnectionState;
-use App\Network\In\AbstractClientAction;
+use App\Network\In\ActionInterface;
 use App\Network\Out\Authed\CharacterAlreadyExists;
 use App\Network\Out\Authed\CharacterCreated;
 use App\Network\Out\Authed\ChooseRace;
@@ -17,15 +16,16 @@ use App\Network\Out\Authed\InvalidRace;
 use App\Network\Out\Authed\NoStartingRoom;
 use App\Network\Out\Ingame\CharacterStats;
 use App\Network\Out\Usage;
+use App\Network\UserInterface;
 use App\Repository\RoomRepository;
 use Doctrine\ORM\EntityManagerInterface;
 
-final class CharacterCreate extends AbstractClientAction
+final class CharacterCreate implements ActionInterface
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly RoomRepository $roomRepository,
-        private readonly CharacterList $charactersCommand,
+        private readonly CharacterList $characterListAction,
         private readonly DiceRoller $diceRoller,
     ) {
     }
@@ -40,24 +40,24 @@ final class CharacterCreate extends AbstractClientAction
         return [ConnectionState::Authed];
     }
 
-    public function onClientAction(Client $client, string $argument): void
+    public function onReceive(UserInterface $user, string $argument): void
     {
         $name = trim($argument);
 
         if ($name === '') {
-            $client->send(new Usage('character-create <name>'));
-            $this->charactersCommand->onClientAction($client, '');
+            $user->send(new Usage('character-create <name>'));
+            $this->characterListAction->onReceive($user, '');
 
             return;
         }
 
-        $account = $client->account();
+        $account = $user->account();
 
         $existing = $this->entityManager->getRepository(Character::class)->findOneBy(['account' => $account, 'name' => $name]);
 
         if ($existing !== null) {
-            $client->send(new CharacterAlreadyExists($name));
-            $this->charactersCommand->onClientAction($client, '');
+            $user->send(new CharacterAlreadyExists($name));
+            $this->characterListAction->onReceive($user, '');
 
             return;
         }
@@ -65,29 +65,29 @@ final class CharacterCreate extends AbstractClientAction
         $startingRoom = $this->roomRepository->findStartingRoom();
 
         if ($startingRoom === null) {
-            $client->send(new NoStartingRoom());
-            $this->charactersCommand->onClientAction($client, '');
+            $user->send(new NoStartingRoom());
+            $this->characterListAction->onReceive($user, '');
 
             return;
         }
 
-        $this->promptRace($client, $account, $startingRoom, $name);
+        $this->promptRace($user, $account, $startingRoom, $name);
     }
 
-    private function promptRace(Client $client, Account $account, Room $startingRoom, string $name): void
+    private function promptRace(UserInterface $user, Account $account, Room $startingRoom, string $name): void
     {
-        $client->send(new ChooseRace());
-        $client->awaitLine(function (string $line) use ($client, $account, $startingRoom, $name): void {
+        $user->send(new ChooseRace());
+        $user->awaitLine(function (string $line) use ($user, $account, $startingRoom, $name): void {
             $race = $this->parseRace($line);
 
             if ($race === null) {
-                $client->send(new InvalidRace(trim($line)));
-                $this->promptRace($client, $account, $startingRoom, $name);
+                $user->send(new InvalidRace(trim($line)));
+                $this->promptRace($user, $account, $startingRoom, $name);
 
                 return;
             }
 
-            $this->createCharacter($client, $account, $startingRoom, $name, $race);
+            $this->createCharacter($user, $account, $startingRoom, $name, $race);
         });
     }
 
@@ -98,7 +98,7 @@ final class CharacterCreate extends AbstractClientAction
         return Race::tryFrom($normalized);
     }
 
-    private function createCharacter(Client $client, Account $account, Room $startingRoom, string $name, Race $race): void
+    private function createCharacter(UserInterface $user, Account $account, Room $startingRoom, string $name, Race $race): void
     {
         $scores = $this->rollAbilityScores();
 
@@ -123,9 +123,9 @@ final class CharacterCreate extends AbstractClientAction
         $this->entityManager->persist($character);
         $this->entityManager->flush();
 
-        $client->send(new CharacterCreated($name));
-        $client->send(new CharacterStats($character));
-        $this->charactersCommand->onClientAction($client, '');
+        $user->send(new CharacterCreated($name));
+        $user->send(new CharacterStats($character));
+        $this->characterListAction->onReceive($user, '');
     }
 
     /**

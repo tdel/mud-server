@@ -2,12 +2,13 @@
 
 namespace App\Network\In\Ingame;
 
-use App\Game\Player;
+use App\Game\PlayerInstance;
 use App\Network\ConnectionState;
-use App\Network\In\AbstractPlayerAction;
+use App\Network\In\ActionInterface;
 use App\Network\Out\Ingame\CharacterStats;
+use App\Network\UserInterface;
 
-final class Stats extends AbstractPlayerAction
+final class Stats implements ActionInterface
 {
     public function name(): string
     {
@@ -19,8 +20,10 @@ final class Stats extends AbstractPlayerAction
         return [ConnectionState::Ingame];
     }
 
-    public function onPlayerAction(Player $player, string $argument): void
+    public function onReceive(UserInterface $user, string $argument): void
     {
+        $player = $user->player();
+
         $player->send(new CharacterStats($player->character()));
     }
 }

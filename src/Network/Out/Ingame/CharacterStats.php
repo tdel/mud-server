@@ -2,7 +2,6 @@
 
 namespace App\Network\Out\Ingame;
 
-use App\Auth\Client;
 use App\Entity\Character;
 use App\Network\Telnet\Ansi;
 use App\Network\Telnet\OutputTelnetMessageInterface;
@@ -15,7 +14,7 @@ final class CharacterStats implements OutputTelnetMessageInterface
     ) {
     }
 
-    public function toTelnet(TelnetOutputInterface $output, Client $client): void
+    public function toTelnet(TelnetOutputInterface $output): void
     {
         $c = $this->character;
 

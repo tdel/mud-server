@@ -2,48 +2,43 @@
 
 namespace App\Game;
 
-use App\Auth\Client;
 use App\Entity\Character;
 use App\Entity\Room;
 use App\Network\OutputMessageInterface;
+use App\Network\UserInterface;
 
 /**
  * A connected player, regardless of which transport (telnet, some future
  * protocol) it's connected through — delegated entirely to its Client. A
- * Player is tied to one Character for its whole lifetime — switching
+ * PlayerInstance is tied to one Character for its whole lifetime — switching
  * characters means logging out and selecting another one, which creates a
- * new Player.
+ * new PlayerInstance.
  */
-final class Player
+final class PlayerInstance
 {
     public function __construct(
-        private readonly Character $character,
-        private readonly Client $client,
+        private readonly UserInterface $user,
     ) {
+        $user->attachPlayer($this);
     }
 
     public function character(): Character
     {
-        return $this->character;
-    }
-
-    public function client(): Client
-    {
-        return $this->client;
+        return $this->user->account()->currentCharacter;
     }
 
     public function currentRoom(): Room
     {
-        return $this->character->currentRoom;
+        return $this->character()->currentRoom;
     }
 
     public function moveToRoom(Room $room): void
     {
-        $this->character->moveToRoom($room);
+        $this->character()->moveToRoom($room);
     }
 
     public function send(OutputMessageInterface $message): void
     {
-        $this->client->send($message);
+        $this->user->send($message);
     }
 }

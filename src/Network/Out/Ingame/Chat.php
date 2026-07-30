@@ -2,7 +2,6 @@
 
 namespace App\Network\Out\Ingame;
 
-use App\Auth\Client;
 use App\Network\Telnet\Ansi;
 use App\Network\Telnet\OutputTelnetMessageInterface;
 use App\Network\Telnet\TelnetOutputInterface;
@@ -15,7 +14,7 @@ final class Chat implements OutputTelnetMessageInterface
     ) {
     }
 
-    public function toTelnet(TelnetOutputInterface $output, Client $client): void
+    public function toTelnet(TelnetOutputInterface $output): void
     {
         $output->write(sprintf("%s says: %s\n", Ansi::character($this->speakerName), $this->text));
     }

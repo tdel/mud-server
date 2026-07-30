@@ -17,7 +17,7 @@ use Doctrine\ORM\EntityManagerInterface;
  */
 final class RoomInstance
 {
-    /** @var \SplObjectStorage<Player, null> */
+    /** @var \SplObjectStorage<PlayerInstance, null> */
     private \SplObjectStorage $players;
 
     public function __construct(
@@ -27,7 +27,7 @@ final class RoomInstance
         $this->players = new \SplObjectStorage();
     }
 
-    public function join(Player $player): void
+    public function join(PlayerInstance $player): void
     {
         $player->moveToRoom($this->room);
         $this->entityManager->flush();
@@ -37,14 +37,14 @@ final class RoomInstance
         $this->broadcast(new CharacterJoinedRoom($player->character()->name), exclude: $player);
     }
 
-    public function leave(Player $player, Room $destination): void
+    public function leave(PlayerInstance $player, Room $destination): void
     {
         $this->players->detach($player);
 
         $this->broadcast(new CharacterLeftRoom($player->character()->name, $destination->name), exclude: $player);
     }
 
-    public function disconnect(Player $player): void
+    public function disconnect(PlayerInstance $player): void
     {
         $this->players->detach($player);
 
@@ -75,7 +75,7 @@ final class RoomInstance
         return $characters;
     }
 
-    public function broadcast(OutputMessageInterface $message, ?Player $exclude = null): void
+    public function broadcast(OutputMessageInterface $message, ?PlayerInstance $exclude = null): void
     {
         foreach ($this->players as $player) {
             if ($player === $exclude) {

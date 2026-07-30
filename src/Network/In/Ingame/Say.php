@@ -3,14 +3,15 @@
 namespace App\Network\In\Ingame;
 
 use App\Game\GameWorld;
-use App\Game\Player;
+use App\Game\PlayerInstance;
 use App\Network\ConnectionState;
-use App\Network\In\AbstractPlayerAction;
+use App\Network\In\ActionInterface;
 use App\Network\Out\Ingame\Chat;
 use App\Network\Out\Ingame\SayNothing;
 use App\Network\Out\Ingame\YouSaid;
+use App\Network\UserInterface;
 
-final class Say extends AbstractPlayerAction
+final class Say implements ActionInterface
 {
     public function __construct(
         private readonly GameWorld $gameWorld,
@@ -27,8 +28,10 @@ final class Say extends AbstractPlayerAction
         return [ConnectionState::Ingame];
     }
 
-    public function onPlayerAction(Player $player, string $argument): void
+    public function onReceive(UserInterface $user, string $argument): void
     {
+        $player = $user->player();
+
         $message = trim($argument);
 
         if ($message === '') {

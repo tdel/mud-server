@@ -2,8 +2,8 @@
 
 namespace App\Network;
 
-use App\Auth\Client;
 use App\Network\In\ActionInterface;
+use App\Network\Out\ActionNotFound;
 
 final class ActionDispatcher
 {
@@ -12,20 +12,28 @@ final class ActionDispatcher
     ) {
     }
 
-    public function find(ConnectionState $state, string $name): ?ActionInterface
+    public function dispatch(UserInterface $user, string $actionName, string $argument): void
     {
-        return $this->registry->find($state, $name);
-    }
+        $action = $this->registry->find($user->state(), $actionName);
+        if (null === $action) {
+            $user->send(new ActionNotFound());
 
-    public function dispatch(Client $client, ActionInterface $action, string $argument): void
-    {
-        if ($client->state() === ConnectionState::Ingame) {
+            return;
+        }
+
+        // log before
+        $action->onReceive($user, $argument);
+
+        // maybe log after ?
+
+        /*
+        if ($user->state() === ConnectionState::Ingame) {
             $player = $client->player();
             \assert($player !== null);
 
             $action->onPlayerAction($player, $argument);
         } else {
             $action->onClientAction($client, $argument);
-        }
+        }*/
     }
 }

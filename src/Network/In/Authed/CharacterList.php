@@ -2,14 +2,14 @@
 
 namespace App\Network\In\Authed;
 
-use App\Auth\Client;
 use App\Entity\Character;
 use App\Network\ConnectionState;
-use App\Network\In\AbstractClientAction;
+use App\Network\In\ActionInterface;
 use App\Network\Out\Authed\CharacterList as CharacterListMessage;
+use App\Network\UserInterface;
 use Doctrine\ORM\EntityManagerInterface;
 
-final class CharacterList extends AbstractClientAction
+final class CharacterList implements ActionInterface
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
@@ -26,14 +26,13 @@ final class CharacterList extends AbstractClientAction
         return [ConnectionState::Authed];
     }
 
-    public function onClientAction(Client $client, string $argument): void
+    public function onReceive(UserInterface $user, string $argument): void
     {
-        $account = $client->account();
-
+        $account = $user->account();
         $characters = $this->entityManager->getRepository(Character::class)->findBy(['account' => $account]);
 
         $names = array_map(static fn (Character $character): string => $character->name, $characters);
 
-        $client->send(new CharacterListMessage($names));
+        $user->send(new CharacterListMessage($names));
     }
 }

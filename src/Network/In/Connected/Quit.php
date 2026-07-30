@@ -2,26 +2,29 @@
 
 namespace App\Network\In\Connected;
 
-use App\Auth\Client;
 use App\Network\ConnectionState;
-use App\Network\In\AbstractClientAction;
+use App\Network\In\ActionInterface;
 use App\Network\Out\Connected\Goodbye;
+use App\Network\UserInterface;
 
-final class Quit extends AbstractClientAction
+final class Quit implements ActionInterface
 {
+    #[\Override]
     public function name(): string
     {
         return 'quit';
     }
 
+    #[\Override]
     public function states(): array
     {
         return [ConnectionState::Connected];
     }
 
-    public function onClientAction(Client $client, string $argument): void
+    #[\Override]
+    public function onReceive(UserInterface $user, string $argument): void
     {
-        $client->send(new Goodbye());
-        $client->close();
+        $user->send(new Goodbye());
+        $user->close();
     }
 }

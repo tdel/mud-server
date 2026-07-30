@@ -4,13 +4,14 @@ namespace App\Network\In\Ingame;
 
 use App\Game\Dice\DiceExpression;
 use App\Game\Dice\DiceRoller;
-use App\Game\Player;
+use App\Game\PlayerInstance;
 use App\Network\ConnectionState;
-use App\Network\In\AbstractPlayerAction;
+use App\Network\In\ActionInterface;
 use App\Network\Out\Ingame\DiceRolled;
 use App\Network\Out\Usage;
+use App\Network\UserInterface;
 
-final class Roll extends AbstractPlayerAction
+final class Roll implements ActionInterface
 {
     public function __construct(
         private readonly DiceRoller $diceRoller,
@@ -27,8 +28,10 @@ final class Roll extends AbstractPlayerAction
         return [ConnectionState::Ingame];
     }
 
-    public function onPlayerAction(Player $player, string $argument): void
+    public function onReceive(UserInterface $user, string $argument): void
     {
+        $player = $user->player();
+
         $notation = trim($argument);
 
         if ($notation === '') {

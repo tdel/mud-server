@@ -2,20 +2,20 @@
 
 namespace App\Network\In\Authed;
 
-use App\Auth\Client;
 use App\Entity\Character;
 use App\Network\ConnectionState;
-use App\Network\In\AbstractClientAction;
+use App\Network\In\ActionInterface;
 use App\Network\Out\Authed\CharacterDeleted;
 use App\Network\Out\Authed\NoCharacterNamed;
 use App\Network\Out\Usage;
+use App\Network\UserInterface;
 use Doctrine\ORM\EntityManagerInterface;
 
-final class CharacterDelete extends AbstractClientAction
+final class CharacterDelete implements ActionInterface
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
-        private readonly CharacterList $charactersCommand,
+        private readonly CharacterList $characterListAction,
     ) {
     }
 
@@ -29,24 +29,24 @@ final class CharacterDelete extends AbstractClientAction
         return [ConnectionState::Authed];
     }
 
-    public function onClientAction(Client $client, string $argument): void
+    public function onReceive(UserInterface $user, string $argument): void
     {
         $name = trim($argument);
 
         if ($name === '') {
-            $client->send(new Usage('character-delete <name>'));
-            $this->charactersCommand->onClientAction($client, '');
+            $user->send(new Usage('character-delete <name>'));
+            $this->characterListAction->onReceive($user, '');
 
             return;
         }
 
-        $account = $client->account();
+        $account = $user->account();
 
         $character = $this->entityManager->getRepository(Character::class)->findOneBy(['account' => $account, 'name' => $name]);
 
         if ($character === null) {
-            $client->send(new NoCharacterNamed($name));
-            $this->charactersCommand->onClientAction($client, '');
+            $user->send(new NoCharacterNamed($name));
+            $this->characterListAction->onReceive($user, '');
 
             return;
         }
@@ -59,7 +59,7 @@ final class CharacterDelete extends AbstractClientAction
         $this->entityManager->remove($character);
         $this->entityManager->flush();
 
-        $client->send(new CharacterDeleted($name));
-        $this->charactersCommand->onClientAction($client, '');
+        $user->send(new CharacterDeleted($name));
+        $this->characterListAction->onReceive($user, '');
     }
 }

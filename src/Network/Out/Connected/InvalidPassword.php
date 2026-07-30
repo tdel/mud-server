@@ -2,7 +2,6 @@
 
 namespace App\Network\Out\Connected;
 
-use App\Auth\Client;
 use App\Network\Telnet\OutputTelnetMessageInterface;
 use App\Network\Telnet\TelnetOutputInterface;
 
@@ -16,7 +15,7 @@ final class InvalidPassword implements OutputTelnetMessageInterface
     ) {
     }
 
-    public function toTelnet(TelnetOutputInterface $output, Client $client): void
+    public function toTelnet(TelnetOutputInterface $output): void
     {
         foreach ($this->reasons as $reason) {
             $output->write(sprintf("%s\n", $reason));

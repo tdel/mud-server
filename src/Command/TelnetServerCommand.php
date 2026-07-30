@@ -2,7 +2,7 @@
 
 namespace App\Command;
 
-use App\Auth\AuthWorld;
+use App\Game\AuthWorld;
 use App\Game\GameWorld;
 use App\Repository\RoomRepository;
 use App\Network\ActionDispatcher;

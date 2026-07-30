@@ -2,7 +2,6 @@
 
 namespace App\Network\Out\Ingame;
 
-use App\Auth\Client;
 use App\Network\Telnet\Ansi;
 use App\Network\Telnet\OutputTelnetMessageInterface;
 use App\Network\Telnet\TelnetOutputInterface;
@@ -14,7 +13,7 @@ final class ItemDropped implements OutputTelnetMessageInterface
     ) {
     }
 
-    public function toTelnet(TelnetOutputInterface $output, Client $client): void
+    public function toTelnet(TelnetOutputInterface $output): void
     {
         $output->write(sprintf("You drop the %s.\n", Ansi::item($this->name)));
     }

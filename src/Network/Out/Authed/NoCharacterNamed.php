@@ -2,7 +2,6 @@
 
 namespace App\Network\Out\Authed;
 
-use App\Auth\Client;
 use App\Network\Telnet\Ansi;
 use App\Network\Telnet\OutputTelnetMessageInterface;
 use App\Network\Telnet\TelnetOutputInterface;
@@ -14,7 +13,7 @@ final class NoCharacterNamed implements OutputTelnetMessageInterface
     ) {
     }
 
-    public function toTelnet(TelnetOutputInterface $output, Client $client): void
+    public function toTelnet(TelnetOutputInterface $output): void
     {
         $output->write(sprintf("No character named \"%s\".\n", Ansi::character($this->name)));
     }

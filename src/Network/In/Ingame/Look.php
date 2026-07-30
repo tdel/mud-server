@@ -6,13 +6,14 @@ use App\Entity\Character;
 use App\Entity\Item;
 use App\Entity\RoomExit;
 use App\Game\GameWorld;
-use App\Game\Player;
+use App\Game\PlayerInstance;
 use App\Network\ConnectionState;
-use App\Network\In\AbstractPlayerAction;
+use App\Network\In\ActionInterface;
 use App\Network\Out\Ingame\RoomDescription;
+use App\Network\UserInterface;
 use Doctrine\ORM\EntityManagerInterface;
 
-final class Look extends AbstractPlayerAction
+final class Look implements ActionInterface
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
@@ -30,8 +31,10 @@ final class Look extends AbstractPlayerAction
         return [ConnectionState::Ingame];
     }
 
-    public function onPlayerAction(Player $player, string $argument): void
+    public function onReceive(UserInterface $user, string $argument): void
     {
+        $player = $user->player();
+
         $player->send($this->describeRoom($player->character()));
     }
 

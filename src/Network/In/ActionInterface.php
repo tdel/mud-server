@@ -2,9 +2,9 @@
 
 namespace App\Network\In;
 
-use App\Auth\Client;
-use App\Game\Player;
+use App\Game\PlayerInstance;
 use App\Network\ConnectionState;
+use App\Network\UserInterface;
 
 interface ActionInterface
 {
@@ -18,7 +18,6 @@ interface ActionInterface
      */
     public function states(): array;
 
-    public function onClientAction(Client $client, string $argument): void;
+    public function onReceive(UserInterface $user, string $argument): void;
 
-    public function onPlayerAction(Player $player, string $argument): void;
 }

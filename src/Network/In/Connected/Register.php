@@ -2,29 +2,31 @@
 
 namespace App\Network\In\Connected;
 
-use App\Auth\Client;
+use App\Game\AuthWorld;
 use App\Entity\Account;
 use App\Network\ConnectionState;
-use App\Network\In\AbstractClientAction;
+use App\Network\In\ActionInterface;
 use App\Network\In\Authed\CharacterList;
 use App\Network\Out\Connected\AccountCreated;
 use App\Network\Out\Connected\InvalidPassword;
 use App\Network\Out\Connected\LoginAlreadyTaken;
 use App\Network\Out\Connected\PasswordMismatch;
 use App\Network\Out\Usage;
+use App\Network\UserInterface;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-final class Register extends AbstractClientAction
+final class Register implements ActionInterface
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
-        private readonly CharacterList $charactersCommand,
+        private readonly CharacterList $characterListAction,
         private readonly UserPasswordHasherInterface $passwordHasher,
         private readonly ValidatorInterface $validator,
+        private readonly AuthWorld $authWorld
     ) {
     }
 
@@ -38,29 +40,29 @@ final class Register extends AbstractClientAction
         return [ConnectionState::Connected];
     }
 
-    public function onClientAction(Client $client, string $argument): void
+    public function onReceive(UserInterface $user, string $argument): void
     {
         $login = trim($argument);
 
         if ($login === '') {
-            $client->send(new Usage('register <name>'));
+            $user->send(new Usage('register <name>'));
 
             return;
         }
 
         $existing = $this->entityManager->getRepository(Account::class)->findOneBy(['login' => $login]);
         if ($existing !== null) {
-            $client->send(new LoginAlreadyTaken($login));
+            $user->send(new LoginAlreadyTaken($login));
 
             return;
         }
 
-        $client->promptMasked('Password: ', function (string $password) use ($client, $login): void {
-            $this->onPasswordEntered($client, $login, $password);
+        $user->promptMasked('Password: ', function (string $password) use ($user, $login): void {
+            $this->onPasswordEntered($user, $login, $password);
         });
     }
 
-    private function onPasswordEntered(Client $client, string $login, string $password): void
+    private function onPasswordEntered(UserInterface $user, string $login, string $password): void
     {
         $violations = $this->validator->validate($password, [
             new Assert\NotBlank(),
@@ -73,20 +75,20 @@ final class Register extends AbstractClientAction
                 $reasons[] = (string) $violation->getMessage();
             }
 
-            $client->send(new InvalidPassword($reasons));
+            $user->send(new InvalidPassword($reasons));
 
             return;
         }
 
-        $client->promptMasked('Confirm password: ', function (string $confirmation) use ($client, $login, $password): void {
-            $this->onPasswordConfirmed($client, $login, $password, $confirmation);
+        $user->promptMasked('Confirm password: ', function (string $confirmation) use ($user, $login, $password): void {
+            $this->onPasswordConfirmed($user, $login, $password, $confirmation);
         });
     }
 
-    private function onPasswordConfirmed(Client $client, string $login, string $password, string $confirmation): void
+    private function onPasswordConfirmed(UserInterface $user, string $login, string $password, string $confirmation): void
     {
         if ($password !== $confirmation) {
-            $client->send(new PasswordMismatch());
+            $user->send(new PasswordMismatch());
 
             return;
         }
@@ -98,16 +100,15 @@ final class Register extends AbstractClientAction
             $this->entityManager->persist($account);
             $this->entityManager->flush();
         } catch (UniqueConstraintViolationException) {
-            $client->send(new LoginAlreadyTaken($login));
+            $user->send(new LoginAlreadyTaken($login));
 
             return;
         }
 
-        $client->setAccount($account);
-        $client->setPlayer(null);
-        $client->setState(ConnectionState::Authed);
+        $user->attachAccount($account);
+        $this->authWorld->enterWorld($user);
 
-        $client->send(new AccountCreated($login));
-        $this->charactersCommand->onClientAction($client, '');
+        $user->send(new AccountCreated($login));
+        $this->characterListAction->onReceive($user, '');
     }
 }

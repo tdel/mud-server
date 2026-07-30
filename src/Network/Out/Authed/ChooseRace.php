@@ -2,14 +2,13 @@
 
 namespace App\Network\Out\Authed;
 
-use App\Auth\Client;
 use App\Entity\Enum\Race;
 use App\Network\Telnet\OutputTelnetMessageInterface;
 use App\Network\Telnet\TelnetOutputInterface;
 
 final class ChooseRace implements OutputTelnetMessageInterface
 {
-    public function toTelnet(TelnetOutputInterface $output, Client $client): void
+    public function toTelnet(TelnetOutputInterface $output): void
     {
         $lines = ["Choose your character's race:"];
         foreach (Race::cases() as $race) {

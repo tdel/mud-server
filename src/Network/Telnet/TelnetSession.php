@@ -2,26 +2,33 @@
 
 namespace App\Network\Telnet;
 
-use App\Auth\AuthWorld;
-use App\Auth\Client;
+use App\Game\AuthWorld;
+use App\Entity\Account;
 use App\Game\GameWorld;
+use App\Game\PlayerInstance;
 use App\Network\ActionDispatcher;
 use App\Network\ConnectionState;
+use App\Network\OutputMessageInterface;
+use App\Network\UserInterface;
 use Monolog\Attribute\WithMonologChannel;
 use Psr\Log\LoggerInterface;
 use React\Socket\ConnectionInterface;
 use Symfony\Component\Uid\Uuid;
 
 #[WithMonologChannel('game')]
-final class TelnetSession implements TelnetOutputInterface
+final class TelnetSession implements UserInterface, TelnetOutputInterface
 {
     private const int MAX_BUFFER = 1024;
 
-    private readonly string $sessionId;
+    private readonly string $instanceId;
     private string $buffer = '';
-    private readonly Client $client;
+    private ?Account $account = null;
+    private ?PlayerInstance $playerInstance = null;
+
     /** @var \Closure(string): void|null */
     private ?\Closure $pendingLine = null;
+
+    private ConnectionState $state;
 
     public function __construct(
         private readonly ConnectionInterface $connection,
@@ -30,12 +37,11 @@ final class TelnetSession implements TelnetOutputInterface
         private readonly AuthWorld $authWorld,
         private readonly LoggerInterface $logger,
     ) {
-        $this->sessionId = Uuid::v7()->toRfc4122();
-        $this->client = new Client($this);
-        $this->authWorld->enterWorld($this->client);
+        $this->instanceId = Uuid::v7()->toRfc4122();
+        $this->state = ConnectionState::Connected;
 
         $this->logger->info('telnet.connected', [
-            'session' => $this->sessionId,
+            'session' => $this->instanceId,
             'remote' => $connection->getRemoteAddress(),
         ]);
 
@@ -46,23 +52,20 @@ final class TelnetSession implements TelnetOutputInterface
         });
         $connection->on('error', function (\Throwable $e): void {
             $this->logger->warning('telnet.connection.error', [
-                'session' => $this->sessionId,
+                'session' => $this->instanceId,
                 'exception' => $e,
             ]);
         });
         $connection->on('close', function (): void {
-            $player = $this->client->player();
+            if ($this->playerInstance !== null) {
+                $this->gameWorld->exitWorld($this->playerInstance);
+            }
+            $this->authWorld->exitWorld($this);
 
             $this->logger->info('telnet.disconnected', [
-                'session' => $this->sessionId,
-                'account' => $this->client->accountOrNull()?->login,
-                'character' => $player?->character()->name,
+                'session' => $this->instanceId,
             ]);
 
-            if ($player !== null) {
-                $this->gameWorld->exitWorld($player);
-            }
-            $this->authWorld->exitWorld($this->client);
         });
     }
 
@@ -95,11 +98,19 @@ final class TelnetSession implements TelnetOutputInterface
         }
 
         [$name, $argument] = explode(' ', $line, 2) + [1 => ''];
-        $action = $this->actionDispatcher->find($this->client->state(), strtolower($name));
 
+        $this->logger->info('telnet.command', [
+            'session' => $this->instanceId,
+            'command' => strtolower($name),
+            'argument' => $argument,
+        ]);
+
+        $this->actionDispatcher->dispatch($this, strtolower($name), $argument);
+
+        /*
         if ($action === null) {
             $this->logger->warning('telnet.unknown_command', [
-                'session' => $this->sessionId,
+                'session' => $this->instanceId,
                 'input' => $name,
             ]);
 
@@ -109,17 +120,8 @@ final class TelnetSession implements TelnetOutputInterface
             }
 
             return;
-        }
+        }*/
 
-        $this->logger->info('telnet.command', [
-            'session' => $this->sessionId,
-            'account' => $this->client->accountOrNull()?->login,
-            'character' => $this->client->player()?->character()->name,
-            'command' => $action->name(),
-            'argument' => $argument,
-        ]);
-
-        $this->actionDispatcher->dispatch($this->client, $action, $argument);
     }
 
     /**
@@ -151,9 +153,13 @@ final class TelnetSession implements TelnetOutputInterface
         });
     }
 
-    public function send(OutputTelnetMessageInterface $message, Client $client): void
+    public function send(OutputMessageInterface $message): void
     {
-        $message->toTelnet($this, $client);
+        if (! ($message instanceof OutputTelnetMessageInterface)) {
+            throw new \Exception('...'); // better exception here !
+        }
+
+        $message->toTelnet($this);
         $this->write('> ');
     }
 
@@ -165,5 +171,56 @@ final class TelnetSession implements TelnetOutputInterface
     public function write(string $text): void
     {
         $this->connection->write($text);
+    }
+
+    public function state(): ConnectionState
+    {
+        return $this->state;
+    }
+
+    #[\Override]
+    public function account(): Account
+    {
+        return $this->account;
+    }
+
+    #[\Override]
+    public function player(): PlayerInstance
+    {
+        return $this->playerInstance;
+    }
+
+    #[\Override]
+    public function attachAccount(Account $account): void
+    {
+        $this->account = $account;
+    }
+
+    #[\Override]
+    public function attachPlayer(PlayerInstance $player): void
+    {
+        $this->playerInstance = $player;
+    }
+
+    #[\Override]
+    public function setState(ConnectionState $state): void
+    {
+        $this->state = $state;
+
+        switch ($state) {
+            case ConnectionState::Connected:
+                $this->account = null;
+                $this->playerInstance = null;
+                break;
+            case ConnectionState::Authed:
+                $this->playerInstance = null;
+                break;
+            case ConnectionState::Ingame:
+                break;
+
+            default:
+                throw new \RuntimeException('...?');
+        }
+
     }
 }

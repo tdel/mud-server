@@ -10,7 +10,7 @@ use Doctrine\ORM\EntityManagerInterface;
 
 /**
  * Tracks every player currently in the game world, for as long as the
- * server process runs. Transport-agnostic: only knows about Player and
+ * server process runs. Transport-agnostic: only knows about PlayerInstance and
  * Room, never about telnet (or any other transport) directly. Keyed by
  * room id (not object identity) since Doctrine may hand back a different
  * Room instance for the same row after an EntityManager reset.
@@ -20,7 +20,7 @@ final class GameWorld
     /** @var array<string, RoomInstance> */
     private array $roomInstances = [];
 
-    /** @var \SplObjectStorage<Player, null> */
+    /** @var \SplObjectStorage<PlayerInstance, null> */
     private \SplObjectStorage $players;
 
     public function __construct(
@@ -29,13 +29,13 @@ final class GameWorld
         $this->players = new \SplObjectStorage();
     }
 
-    public function enterWorld(Player $player): void
+    public function enterWorld(PlayerInstance $player): void
     {
         $this->players->attach($player);
         $this->roomInstance($player->currentRoom())->join($player);
     }
 
-    public function exitWorld(Player $player): void
+    public function exitWorld(PlayerInstance $player): void
     {
         if (!$this->players->contains($player)) {
             return;
@@ -50,7 +50,7 @@ final class GameWorld
         return $this->roomInstances[$room->id->toString()] ??= new RoomInstance($room, $this->entityManager);
     }
 
-    public function isAccountConnected(Account $account): bool
+    public function isAlreadyConnected(Account $account): bool
     {
         foreach ($this->players as $player) {
             if ($player->character()->account->id->equals($account->id)) {

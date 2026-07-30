@@ -2,7 +2,6 @@
 
 namespace App\Network\Out\Ingame;
 
-use App\Auth\Client;
 use App\Network\Telnet\Ansi;
 use App\Network\Telnet\OutputTelnetMessageInterface;
 use App\Network\Telnet\TelnetOutputInterface;
@@ -23,7 +22,7 @@ final class RoomDescription implements OutputTelnetMessageInterface
     ) {
     }
 
-    public function toTelnet(TelnetOutputInterface $output, Client $client): void
+    public function toTelnet(TelnetOutputInterface $output): void
     {
         $output->write(sprintf(
             "== %s ==\n%s\n\nExits: %s\nCharacters here: %s\nItems: %s\n",

@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Network\Out\Ingame;
+namespace App\Network\Out\Authed;
 
 use App\Network\Telnet\Ansi;
 use App\Network\Telnet\OutputTelnetMessageInterface;
 use App\Network\Telnet\TelnetOutputInterface;
 
-final class CharacterJoinedRoom implements OutputTelnetMessageInterface
+final class StoppedPlaying implements OutputTelnetMessageInterface
 {
     public function __construct(
         private readonly string $characterName,
@@ -15,6 +15,6 @@ final class CharacterJoinedRoom implements OutputTelnetMessageInterface
 
     public function toTelnet(TelnetOutputInterface $output): void
     {
-        $output->write(sprintf("%s vous a rejoint.\n", Ansi::character($this->characterName)));
+        $output->write(sprintf("You stop playing %s.\n\n", Ansi::character($this->characterName)));
     }
 }

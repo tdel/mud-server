@@ -3,16 +3,16 @@
 namespace App\Network\In\Ingame;
 
 use App\Entity\Item;
-use App\Game\Player;
 use App\Network\ConnectionState;
-use App\Network\In\AbstractPlayerAction;
+use App\Network\In\ActionInterface;
 use App\Network\Out\Ingame\ItemNotCarried;
 use App\Network\Out\Ingame\ItemNotEquipped;
 use App\Network\Out\Ingame\ItemUnequipped;
 use App\Network\Out\Usage;
+use App\Network\UserInterface;
 use Doctrine\ORM\EntityManagerInterface;
 
-final class Unequip extends AbstractPlayerAction
+final class Unequip implements ActionInterface
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
@@ -29,8 +29,10 @@ final class Unequip extends AbstractPlayerAction
         return [ConnectionState::Ingame];
     }
 
-    public function onPlayerAction(Player $player, string $argument): void
+    public function onReceive(UserInterface $user, string $argument): void
     {
+        $player = $user->player();
+
         $name = trim($argument);
 
         if ($name === '') {

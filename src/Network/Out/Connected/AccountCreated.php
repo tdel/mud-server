@@ -2,7 +2,6 @@
 
 namespace App\Network\Out\Connected;
 
-use App\Auth\Client;
 use App\Network\Telnet\OutputTelnetMessageInterface;
 use App\Network\Telnet\TelnetOutputInterface;
 
@@ -13,7 +12,7 @@ final class AccountCreated implements OutputTelnetMessageInterface
     ) {
     }
 
-    public function toTelnet(TelnetOutputInterface $output, Client $client): void
+    public function toTelnet(TelnetOutputInterface $output): void
     {
         $output->write(sprintf("Account \"%s\" created.\n\n", $this->login));
     }

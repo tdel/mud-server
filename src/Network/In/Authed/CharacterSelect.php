@@ -2,26 +2,23 @@
 
 namespace App\Network\In\Authed;
 
-use App\Auth\AuthWorld;
-use App\Auth\Client;
+use App\Game\AuthWorld;
 use App\Entity\Character;
-use App\Game\GameWorld;
-use App\Game\Player;
 use App\Network\ConnectionState;
-use App\Network\In\AbstractClientAction;
+use App\Network\In\ActionInterface;
 use App\Network\In\Ingame\Look;
 use App\Network\Out\Authed\NoCharacterNamed;
 use App\Network\Out\Authed\NowPlaying;
 use App\Network\Out\Usage;
+use App\Network\UserInterface;
 use Doctrine\ORM\EntityManagerInterface;
 
-final class CharacterSelect extends AbstractClientAction
+final class CharacterSelect implements ActionInterface
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
-        private readonly GameWorld $gameWorld,
         private readonly AuthWorld $authWorld,
-        private readonly CharacterList $charactersCommand,
+        private readonly CharacterList $characterListAction,
         private readonly Look $lookCommand,
     ) {
     }
@@ -36,40 +33,34 @@ final class CharacterSelect extends AbstractClientAction
         return [ConnectionState::Authed];
     }
 
-    public function onClientAction(Client $client, string $argument): void
+    public function onReceive(UserInterface $user, string $argument): void
     {
         $name = trim($argument);
 
         if ($name === '') {
-            $client->send(new Usage('character-select <name>'));
-            $this->charactersCommand->onClientAction($client, '');
+            $user->send(new Usage('character-select <name>'));
+            $this->characterListAction->onReceive($user, '');
 
             return;
         }
 
-        $account = $client->account();
+        $account = $user->account();
 
         $character = $this->entityManager->getRepository(Character::class)->findOneBy(['account' => $account, 'name' => $name]);
 
         if ($character === null) {
-            $client->send(new NoCharacterNamed($name));
-            $this->charactersCommand->onClientAction($client, '');
+            $user->send(new NoCharacterNamed($name));
+            $this->characterListAction->onReceive($user, '');
 
             return;
         }
 
         $account->setCurrentCharacter($character);
-        $this->entityManager->persist($account);
         $this->entityManager->flush();
 
-        $player = new Player($character, $client);
-        $this->authWorld->exitWorld($client);
-        $this->gameWorld->enterWorld($player);
+        $this->authWorld->moveToGameWorld($user);
 
-        $client->setPlayer($player);
-        $client->setState(ConnectionState::Ingame);
-
-        $client->send(new NowPlaying($character->name));
-        $this->lookCommand->onPlayerAction($player, '');
+        $user->send(new NowPlaying($character->name));
+        $this->lookCommand->onReceive($user, '');
     }
 }

@@ -2,7 +2,6 @@
 
 namespace App\Network\Out\Ingame;
 
-use App\Auth\Client;
 use App\Game\Dice\DiceExpression;
 use App\Game\Dice\DiceRoll;
 use App\Network\Telnet\OutputTelnetMessageInterface;
@@ -16,7 +15,7 @@ final class DiceRolled implements OutputTelnetMessageInterface
     ) {
     }
 
-    public function toTelnet(TelnetOutputInterface $output, Client $client): void
+    public function toTelnet(TelnetOutputInterface $output): void
     {
         $modifier = match (true) {
             $this->result->modifier > 0 => sprintf(' + %d', $this->result->modifier),

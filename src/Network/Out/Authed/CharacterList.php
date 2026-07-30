@@ -2,7 +2,6 @@
 
 namespace App\Network\Out\Authed;
 
-use App\Auth\Client;
 use App\Network\Telnet\Ansi;
 use App\Network\Telnet\OutputTelnetMessageInterface;
 use App\Network\Telnet\TelnetOutputInterface;
@@ -17,7 +16,7 @@ final class CharacterList implements OutputTelnetMessageInterface
     ) {
     }
 
-    public function toTelnet(TelnetOutputInterface $output, Client $client): void
+    public function toTelnet(TelnetOutputInterface $output): void
     {
         $output->write($this->names === []
             ? "You have no characters yet. Use \"character-create <name>\" to make one.\n"
