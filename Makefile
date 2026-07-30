@@ -54,8 +54,8 @@ phpcs: ## Run PHP_CodeSniffer code style check
 phpcbf: ## Auto-fix PHP_CodeSniffer violations where possible
 	$(PHP_DOCKER_COMPOSE_EXEC) vendor/bin/phpcbf
 
-telnet: ## Start the telnet MUD server (foreground)
-	$(PHP_DOCKER_COMPOSE_EXEC) bin/console app:telnet:serve
+telnet: ## Follow the telnet MUD server logs (it runs as its own supervised "telnet" service via `docker compose up`)
+	$(DOCKER_COMPOSE) logs -f telnet
 %:
 	@:
 

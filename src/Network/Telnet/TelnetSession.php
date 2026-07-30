@@ -89,39 +89,32 @@ final class TelnetSession implements UserInterface, TelnetOutputInterface
 
     private function handleLine(string $line): void
     {
-        if ($this->pendingLine !== null) {
-            $handler = $this->pendingLine;
-            $this->pendingLine = null;
-            $handler($line);
+        try {
+            if ($this->pendingLine !== null) {
+                $handler = $this->pendingLine;
+                $this->pendingLine = null;
+                $handler($line);
 
-            return;
-        }
-
-        [$name, $argument] = explode(' ', $line, 2) + [1 => ''];
-
-        $this->logger->info('telnet.command', [
-            'session' => $this->instanceId,
-            'command' => strtolower($name),
-            'argument' => $argument,
-        ]);
-
-        $this->actionDispatcher->dispatch($this, strtolower($name), $argument);
-
-        /*
-        if ($action === null) {
-            $this->logger->warning('telnet.unknown_command', [
-                'session' => $this->instanceId,
-                'input' => $name,
-            ]);
-
-            $this->write("Unknown command.\n");
-            if ($this->client->state() !== ConnectionState::Connected) {
-                $this->write('> ');
+                return;
             }
 
-            return;
-        }*/
+            [$name, $argument] = explode(' ', $line, 2) + [1 => ''];
 
+            $this->logger->info('telnet.command', [
+                'session' => $this->instanceId,
+                'command' => strtolower($name),
+                'argument' => $argument,
+            ]);
+
+            $this->actionDispatcher->dispatch($this, strtolower($name), $argument);
+        } catch (\Throwable $e) {
+            $this->logger->error('telnet.command.failed', [
+                'session' => $this->instanceId,
+                'line' => $line,
+                'exception' => $e,
+            ]);
+            $this->write("Something went wrong processing that command. Please try again.\n");
+        }
     }
 
     /**

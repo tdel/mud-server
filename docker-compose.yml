@@ -15,9 +15,19 @@ services:
     working_dir: /var/www/mud-server
     depends_on:
       - db
-    ports:
-      - "${TELNET_PORT:-4000}:${TELNET_PORT:-4000}"
     volumes:
       - ./:/var/www/mud-server
       - ./docker/php/xdebug.ini:/usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
       - ./docker/php/php.ini:/usr/local/etc/php/php.ini
+
+  telnet:
+    build: docker/php
+    working_dir: /var/www/mud-server
+    depends_on:
+      - db
+    restart: unless-stopped
+    command: ["bin/console", "app:telnet:serve"]
+    ports:
+      - "${TELNET_PORT:-4000}:${TELNET_PORT:-4000}"
+    volumes:
+      - ./:/var/www/mud-server

@@ -21,6 +21,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     gd \
     intl \
     memcached\
+    pcntl \
     pdo \
     pdo_pgsql \
     zip \

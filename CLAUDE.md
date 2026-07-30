@@ -14,7 +14,7 @@ Implemented so far: the six ability scores on `Character` (`strength`, `dexterit
 
 ## Dev environment (Docker Compose)
 
-Services: `db` (PostgreSQL), `php` (php-fpm 8.5). All commands run through the Makefile, which wraps `docker compose`:
+Services: `db` (PostgreSQL), `php` (CLI sandbox for composer/`bin/console`/tests — no HTTP server, nothing listens on it), `telnet` (runs `app:telnet:serve`, the actual game server, with `restart: unless-stopped`). All commands run through the Makefile, which wraps `docker compose`:
 
 - `make init` — first-time setup: rebuild containers, composer install, drop+recreate DB, run migrations, load fixtures. Destructive — only use for a fresh environment.
 - `make start` / `make stop` / `make restart` — routine container lifecycle.

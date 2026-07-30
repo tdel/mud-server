@@ -61,6 +61,14 @@ final class TelnetServerCommand extends Command
             new TelnetSession($connection, $this->actionDispatcher, $this->gameWorld, $this->authWorld, $this->logger);
         });
 
+        $shutdown = function () use ($socket): void {
+            $this->logger->info('telnet.server.shutting_down');
+            $socket->close();
+            Loop::stop();
+        };
+        Loop::addSignal(SIGTERM, $shutdown);
+        Loop::addSignal(SIGINT, $shutdown);
+
         $this->logger->info('telnet.server.started', ['uri' => $uri]);
         $io->success(sprintf('Telnet server started on %s (Ctrl+C to stop).', $uri));
         Loop::run();
