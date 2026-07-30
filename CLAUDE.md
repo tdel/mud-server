@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-A MUD (text-based multiplayer game) server built on Symfony 8.1 / PHP 8.5, using Doctrine ORM 3 against PostgreSQL. Very early stage: `Controller/`, `Repository/`, and `Security/` are currently empty scaffolding.
+A MUD (text-based multiplayer game) server built on Symfony 8.1 / PHP 8.5, using Doctrine ORM 3 against PostgreSQL. Very early stage: `Controller/` is currently empty scaffolding (just a `.gitignore`), and `Security/` doesn't exist as a directory yet — see Auth below. `Repository/` already holds a few concrete repositories (`ItemTemplateRepository`, `RoomRepository`).
 
 ## Game rules
 
@@ -36,7 +36,11 @@ Entities in `src/Entity/` (Account, Character, Item, Room, RoomExit) follow a co
 - Doctrine attributes (`#[ORM\...]`), not annotations or XML/YAML mapping.
 - No constructor unless the entity initializes collections (e.g. `Room` initializes its `exits`/`items`/`characters` collections in its constructor).
 
-Domain model: `Account` (the Symfony `UserInterface`) has many `Character`s and an active `currentCharacter`. Each `Character` has a `currentRoom`. `Room`s are connected by directed `RoomExit`s (`sourceRoom` → `targetRoom`, one-way). `Item`s live either in a `Room` or on a `Character`, never both.
+Domain model: `Account` (the Symfony `UserInterface`) has many `Character`s and an active `currentCharacter`. Each `Character` has a `currentRoom`. `Room`s are connected by directed `RoomExit`s (`sourceRoom` → `targetRoom`, one-way). `Item`s live either in a `Room` or on a `Character`, never both; a carried `Item` may additionally be equipped in an `EquipmentSlot`.
+
+## Game domain services
+
+`App\Game\ItemService` (`src/Game/ItemService.php`) is the single entry point for reading and mutating a character's items — the bag and the equipped slots alike. It's a regular Symfony service (autowired like everything under `src/`, no special config), owns `EntityManagerInterface`, and flushes on every mutation, so callers never flush themselves. New code touching a character's inventory (take/drop/equip/unequip, and any future crafting/loot/trade flow) should go through it rather than querying `Item` directly via the generic Doctrine repository — this is what the `Take`/`Drop`/`Equip`/`Unequip`/`Inventory` actions in `src/Network/In/Ingame/` do today.
 
 ## Auth
 

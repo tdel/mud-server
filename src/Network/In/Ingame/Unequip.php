@@ -2,7 +2,7 @@
 
 namespace App\Network\In\Ingame;
 
-use App\Entity\Item;
+use App\Game\ItemService;
 use App\Network\ConnectionState;
 use App\Network\In\ActionInterface;
 use App\Network\Out\Ingame\ItemNotCarried;
@@ -10,12 +10,11 @@ use App\Network\Out\Ingame\ItemNotEquipped;
 use App\Network\Out\Ingame\ItemUnequipped;
 use App\Network\Out\Usage;
 use App\Network\UserInterface;
-use Doctrine\ORM\EntityManagerInterface;
 
 final class Unequip implements ActionInterface
 {
     public function __construct(
-        private readonly EntityManagerInterface $entityManager,
+        private readonly ItemService $itemService,
     ) {
     }
 
@@ -42,8 +41,7 @@ final class Unequip implements ActionInterface
         }
 
         $character = $player->character();
-        $items = $this->entityManager->getRepository(Item::class)->findBy(['character' => $character]);
-        $item = $this->findByTemplateName($items, $name);
+        $item = $this->itemService->findItemByName($character, $name);
 
         if ($item === null) {
             $player->send(new ItemNotCarried($name));
@@ -57,23 +55,8 @@ final class Unequip implements ActionInterface
             return;
         }
 
-        $item->unequip();
-        $this->entityManager->flush();
+        $this->itemService->unequipItem($item);
 
         $player->send(new ItemUnequipped($item->template->name));
-    }
-
-    /**
-     * @param Item[] $items
-     */
-    private function findByTemplateName(array $items, string $name): ?Item
-    {
-        foreach ($items as $item) {
-            if (strcasecmp($item->template->name, $name) === 0) {
-                return $item;
-            }
-        }
-
-        return null;
     }
 }

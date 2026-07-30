@@ -2,20 +2,18 @@
 
 namespace App\Network\In\Ingame;
 
-use App\Entity\Item;
-use App\Game\PlayerInstance;
+use App\Game\ItemService;
 use App\Network\ConnectionState;
 use App\Network\In\ActionInterface;
 use App\Network\Out\Ingame\ItemNotFound;
 use App\Network\Out\Ingame\ItemTaken;
 use App\Network\Out\Usage;
 use App\Network\UserInterface;
-use Doctrine\ORM\EntityManagerInterface;
 
 final class Take implements ActionInterface
 {
     public function __construct(
-        private readonly EntityManagerInterface $entityManager,
+        private readonly ItemService $itemService,
     ) {
     }
 
@@ -42,8 +40,7 @@ final class Take implements ActionInterface
         }
 
         $character = $player->character();
-        $items = $this->entityManager->getRepository(Item::class)->findBy(['room' => $character->currentRoom]);
-        $item = $this->findByTemplateName($items, $name);
+        $item = $this->itemService->findItemInRoomByName($character->currentRoom, $name);
 
         if ($item === null) {
             $player->send(new ItemNotFound($name));
@@ -51,23 +48,8 @@ final class Take implements ActionInterface
             return;
         }
 
-        $item->moveToCharacter($character);
-        $this->entityManager->flush();
+        $this->itemService->addItemToInventory($item, $character);
 
         $player->send(new ItemTaken($item->template->name));
-    }
-
-    /**
-     * @param Item[] $items
-     */
-    private function findByTemplateName(array $items, string $name): ?Item
-    {
-        foreach ($items as $item) {
-            if (strcasecmp($item->template->name, $name) === 0) {
-                return $item;
-            }
-        }
-
-        return null;
     }
 }
