@@ -46,7 +46,7 @@ final class ItemSpawnCommand extends Command
         }
 
         $roomName = $input->getOption('room') ?? $io->ask('Room name');
-        $room = $this->roomRepository->findOneBy(['name' => $roomName]);
+        $room = $this->roomRepository->findOneByName($roomName);
 
         if ($room === null) {
             $io->error(sprintf('No room named "%s".', $roomName));

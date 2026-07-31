@@ -19,6 +19,12 @@ services:
     App\:
         resource: '../src/'
 
+    # Every EntityManagerInterface injection in the app is redirected
+    # through a coroutine-aware proxy — see App\Doctrine\EntityManagerProxy
+    # for why (Swoole migration: one EntityManager per telnet connection's
+    # coroutine, falling back to the real singleton outside a coroutine).
+    Doctrine\ORM\EntityManagerInterface: '@App\Doctrine\EntityManagerProxy'
+
     _instanceof:
         App\Network\In\ActionInterface:
             tags: ['app.action']

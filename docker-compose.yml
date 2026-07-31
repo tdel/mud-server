@@ -31,3 +31,7 @@ services:
       - "${TELNET_PORT:-4000}:${TELNET_PORT:-4000}"
     volumes:
       - ./:/var/www/mud-server
+      # Xdebug inside Swoole coroutines is documented as dangerous
+      # (swoole-src issue #4487) — this ini defaults xdebug.mode to off,
+      # unlike the image's built-in default ("develop").
+      - ./docker/php/xdebug.ini:/usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini

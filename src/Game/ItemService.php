@@ -6,6 +6,7 @@ use App\Entity\Character;
 use App\Entity\Enum\EquipmentSlot;
 use App\Entity\Item;
 use App\Entity\Room;
+use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
 
 /**
@@ -83,10 +84,37 @@ final class ItemService
         return null;
     }
 
-    public function addItemToInventory(Item $item, Character $target): void
+    /**
+     * Takes $item into $target's bag, unless another coroutine already
+     * claimed it since the caller looked it up. Concurrent players can
+     * genuinely race to take the same unowned item under Swoole (they
+     * never could under the previous single-threaded ReactPHP transport),
+     * so this re-reads the row under a pessimistic write lock — inside a
+     * transaction, so the lock is held until commit — before deciding
+     * whether it's still there to take. No extra column needed: unlike
+     * optimistic locking, PESSIMISTIC_WRITE (`SELECT ... FOR UPDATE`)
+     * needs no #[ORM\Version] field, just an active transaction.
+     *
+     * @return bool true if $target now carries the item, false if it was
+     *              already taken by someone else in the meantime
+     */
+    public function addItemToInventory(Item $item, Character $target): bool
     {
-        $item->moveToCharacter($target);
-        $this->entityManager->flush();
+        return $this->entityManager->wrapInTransaction(function () use ($item, $target): bool {
+            // find() with a lock mode always hits the database and
+            // refreshes the (already-managed) entity's fields from that
+            // locked read — unlike lock() alone, which only acquires the
+            // lock without re-reading the row's current data.
+            $this->entityManager->find(Item::class, $item->id, LockMode::PESSIMISTIC_WRITE);
+
+            if ($item->character !== null) {
+                return false;
+            }
+
+            $item->moveToCharacter($target);
+
+            return true;
+        });
     }
 
     public function removeItemFromInventory(Item $item, Character $target): void

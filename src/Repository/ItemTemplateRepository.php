@@ -3,21 +3,25 @@
 namespace App\Repository;
 
 use App\Entity\ItemTemplate;
-use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Doctrine\Persistence\ManagerRegistry;
+use Doctrine\ORM\EntityManagerInterface;
 
 /**
- * @extends ServiceEntityRepository<ItemTemplate>
+ * Plain EntityManagerInterface-backed repository — deliberately not a
+ * ServiceEntityRepository. Doctrine bundle's ContainerRepositoryFactory
+ * resolves a ServiceEntityRepository straight from the container,
+ * ignoring whichever EntityManager it was asked for, which would silently
+ * defeat the per-coroutine EntityManager scoping the telnet server relies
+ * on (see App\Doctrine\EntityManagerProxy).
  */
-class ItemTemplateRepository extends ServiceEntityRepository
+final class ItemTemplateRepository
 {
-    public function __construct(ManagerRegistry $registry)
-    {
-        parent::__construct($registry, ItemTemplate::class);
+    public function __construct(
+        private readonly EntityManagerInterface $entityManager,
+    ) {
     }
 
     public function findOneByName(string $name): ?ItemTemplate
     {
-        return $this->findOneBy(['name' => $name]);
+        return $this->entityManager->getRepository(ItemTemplate::class)->findOneBy(['name' => $name]);
     }
 }

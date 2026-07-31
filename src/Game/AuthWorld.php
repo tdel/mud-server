@@ -36,6 +36,9 @@ final class AuthWorld
         $user->setState(ConnectionState::Connected);
     }
 
+    // detach()/new PlayerInstance()/setState() are pure in-memory, no yield
+    // point before enterWorld() — which does its own yield-safety handling
+    // in RoomInstance::join(). Safe as written.
     public function moveToGameWorld(UserInterface $user): void
     {
         $this->connectedUsers->detach($user);
@@ -46,6 +49,9 @@ final class AuthWorld
         $this->gameWorld->enterWorld($player);
     }
 
+    // Pure in-memory scan, no yield point in the loop — safe under
+    // coroutines as written (see GameWorld::isAlreadyConnected() for the
+    // same note; the rule is identical here).
     public function isAlreadyConnected(Account $account): bool
     {
         foreach ($this->connectedUsers as $connectedUser) {

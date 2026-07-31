@@ -5,7 +5,7 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
 
-#[ORM\Entity(repositoryClass: \App\Repository\ItemTemplateRepository::class)]
+#[ORM\Entity]
 class ItemTemplate
 {
     #[ORM\Id]

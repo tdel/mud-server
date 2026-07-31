@@ -12,3 +12,8 @@ parameters:
 		- tests
 	excludePaths:
 		- tests/bootstrap.php
+	# swoole/ide-helper ships no phpstan-extension-installer integration —
+	# without this, Co\run() (declared here) is invisible to PHPStan even
+	# though it's a real function at runtime (swoole.use_shortname=On).
+	scanFiles:
+		- vendor/swoole/ide-helper/src/swoole_library/src/alias_ns.php

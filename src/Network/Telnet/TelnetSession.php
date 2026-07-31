@@ -2,8 +2,8 @@
 
 namespace App\Network\Telnet;
 
-use App\Game\AuthWorld;
 use App\Entity\Account;
+use App\Game\AuthWorld;
 use App\Game\GameWorld;
 use App\Game\PlayerInstance;
 use App\Network\ActionDispatcher;
@@ -12,16 +12,19 @@ use App\Network\OutputMessageInterface;
 use App\Network\UserInterface;
 use Monolog\Attribute\WithMonologChannel;
 use Psr\Log\LoggerInterface;
-use React\Socket\ConnectionInterface;
+use Swoole\Coroutine\Server\Connection;
 use Symfony\Component\Uid\Uuid;
 
+/**
+ * Owns one player's session state and business logic (auth/game-world
+ * transitions, command dispatch). Transport I/O — the recv loop,
+ * buffering, connect/disconnect logging — is TelnetConnectionHandler's
+ * job; this class only needs a Connection to write() to.
+ */
 #[WithMonologChannel('game')]
 final class TelnetSession implements UserInterface, TelnetOutputInterface
 {
-    private const int MAX_BUFFER = 1024;
-
     private readonly string $instanceId;
-    private string $buffer = '';
     private ?Account $account = null;
     private ?PlayerInstance $playerInstance = null;
 
@@ -31,7 +34,7 @@ final class TelnetSession implements UserInterface, TelnetOutputInterface
     private ConnectionState $state;
 
     public function __construct(
-        private readonly ConnectionInterface $connection,
+        private readonly Connection $connection,
         private readonly ActionDispatcher $actionDispatcher,
         private readonly GameWorld $gameWorld,
         private readonly AuthWorld $authWorld,
@@ -39,55 +42,14 @@ final class TelnetSession implements UserInterface, TelnetOutputInterface
     ) {
         $this->instanceId = Uuid::v7()->toRfc4122();
         $this->state = ConnectionState::Connected;
-
-        $this->logger->info('telnet.connected', [
-            'session' => $this->instanceId,
-            'remote' => $connection->getRemoteAddress(),
-        ]);
-
-        $this->write("Welcome to mud-server.\nType \"login <name>\" or \"register <name>\" to begin.\n");
-
-        $connection->on('data', function (string $chunk): void {
-            $this->onData($chunk);
-        });
-        $connection->on('error', function (\Throwable $e): void {
-            $this->logger->warning('telnet.connection.error', [
-                'session' => $this->instanceId,
-                'exception' => $e,
-            ]);
-        });
-        $connection->on('close', function (): void {
-            if ($this->playerInstance !== null) {
-                $this->gameWorld->exitWorld($this->playerInstance);
-            }
-            $this->authWorld->exitWorld($this);
-
-            $this->logger->info('telnet.disconnected', [
-                'session' => $this->instanceId,
-            ]);
-
-        });
     }
 
-    private function onData(string $chunk): void
+    public function instanceId(): string
     {
-        $this->buffer .= IacFilter::strip($chunk);
-
-        if (strlen($this->buffer) > self::MAX_BUFFER) {
-            $this->write("Line too long.\n");
-            $this->connection->close();
-
-            return;
-        }
-
-        while (($pos = strpos($this->buffer, "\n")) !== false) {
-            $line = trim(substr($this->buffer, 0, $pos));
-            $this->buffer = substr($this->buffer, $pos + 1);
-            $this->handleLine($line);
-        }
+        return $this->instanceId;
     }
 
-    private function handleLine(string $line): void
+    public function handleLine(string $line): void
     {
         try {
             if ($this->pendingLine !== null) {
@@ -115,6 +77,18 @@ final class TelnetSession implements UserInterface, TelnetOutputInterface
             ]);
             $this->write("Something went wrong processing that command. Please try again.\n");
         }
+    }
+
+    public function handleClose(): void
+    {
+        if ($this->playerInstance !== null) {
+            $this->gameWorld->exitWorld($this->playerInstance);
+        }
+        $this->authWorld->exitWorld($this);
+
+        $this->logger->info('telnet.disconnected', [
+            'session' => $this->instanceId,
+        ]);
     }
 
     /**
@@ -158,12 +132,12 @@ final class TelnetSession implements UserInterface, TelnetOutputInterface
 
     public function close(): void
     {
-        $this->connection->end();
+        $this->connection->close();
     }
 
     public function write(string $text): void
     {
-        $this->connection->write($text);
+        $this->connection->send($text);
     }
 
     public function state(): ConnectionState
@@ -214,6 +188,5 @@ final class TelnetSession implements UserInterface, TelnetOutputInterface
             default:
                 throw new \RuntimeException('...?');
         }
-
     }
 }

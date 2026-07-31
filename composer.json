@@ -7,13 +7,13 @@
         "php": ">=8.5",
         "ext-ctype": "*",
         "ext-iconv": "*",
+        "ext-swoole": "*",
         "composer": "*",
         "beberlei/doctrineextensions": "^1.5",
         "doctrine/dbal": "^4",
         "doctrine/doctrine-bundle": "^3",
         "doctrine/doctrine-migrations-bundle": "^3",
         "doctrine/orm": "^3",
-        "react/socket": "^1.17",
         "symfony/cache": "8.1.*",
         "symfony/console": "8.1.*",
         "symfony/dotenv": "8.1.*",
@@ -84,6 +84,7 @@
         "phpstan/phpstan-doctrine": "*",
         "phpstan/phpstan-symfony": "*",
         "phpunit/phpunit": "^13.2",
-        "squizlabs/php_codesniffer": "*"
+        "squizlabs/php_codesniffer": "*",
+        "swoole/ide-helper": "^6.2"
     }
 }

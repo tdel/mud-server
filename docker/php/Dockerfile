@@ -12,6 +12,12 @@ RUN ln -snf /usr/share/zoneinfo/${TIMEZONE} /etc/localtime && echo ${TIMEZONE} >
  && printf '[PHP]\ndate.timezone = "%s"\n', ${TIMEZONE} > /usr/local/etc/php/conf.d/tzone.ini \
  && "date"
 
+# io_uring is opt-in in swoole >=6 and, under this environment's default
+# seccomp profile, io_uring_setup() is blocked outright — skip it and use
+# swoole's epoll-based reactor instead (see the Swoole migration plan for
+# the segfault-on-shutdown this avoided).
+ENV IPE_SWOOLE_WITHOUT_IOURING=1
+
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     install-php-extensions \
@@ -25,6 +31,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     pdo \
     pdo_pgsql \
     zip \
+    swoole \
     xdebug
 
 WORKDIR "/var/www"

@@ -9,29 +9,55 @@ use App\Network\Out\Ingame\CharacterJoinedRoom;
 use App\Network\Out\Ingame\CharacterLeftRoom;
 use App\Network\OutputMessageInterface;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * Holds the players currently present in one room, and lets a command
  * broadcast a message to everyone in it. Joining/leaving always notifies
  * the room, so callers never need to remember to do it themselves.
+ *
+ * Runs under Swoole coroutines: any loop over $players is only safe as
+ * long as nothing inside it can yield (findCharacterByName()/characters()
+ * are pure in-memory today and fine as-is — if either ever gains a call
+ * that can yield, it needs the same snapshot-before-iterating treatment
+ * broadcast() uses).
  */
 final class RoomInstance
 {
     /** @var \SplObjectStorage<PlayerInstance, null> */
     private \SplObjectStorage $players;
 
+    private readonly Uuid $roomId;
+
     public function __construct(
-        private readonly Room $room,
+        Room $room,
         private readonly EntityManagerInterface $entityManager,
     ) {
+        $this->roomId = $room->id;
         $this->players = new \SplObjectStorage();
     }
 
     public function join(PlayerInstance $player): void
     {
-        $player->moveToRoom($this->room);
+        // GameWorld caches one RoomInstance per room for the whole server
+        // lifetime, but under Swoole each coroutine gets its own
+        // EntityManager (see App\Doctrine\EntityManagerProxy) with its own
+        // identity map. Holding on to a Room *object* loaded by whichever
+        // coroutine happened to construct this RoomInstance would make it
+        // a foreign, unmanaged entity to every other coroutine's
+        // EntityManager — Doctrine would refuse to flush it (cascade
+        // persist error). getReference() resolves a proxy bound to
+        // *this* call's own current EntityManager instead.
+        $room = $this->entityManager->getReference(Room::class, $this->roomId);
+        \assert($room !== null);
+
+        $player->moveToRoom($room);
         $this->entityManager->flush();
 
+        // attach() only after flush() returns: flush() can yield (DB
+        // round-trip), and a half-joined player must not be visible to
+        // characters()/broadcast()/findCharacterByName() calls made by
+        // other coroutines scheduled during that yield. Keep this order.
         $this->players->attach($player);
 
         $this->broadcast(new CharacterJoinedRoom($player->character()->name), exclude: $player);
@@ -77,7 +103,13 @@ final class RoomInstance
 
     public function broadcast(OutputMessageInterface $message, ?PlayerInstance $exclude = null): void
     {
-        foreach ($this->players as $player) {
+        // Snapshot before iterating: send() can yield (a slow/stalled
+        // client), and another coroutine may attach()/detach() players in
+        // $this->players while this broadcast is suspended mid-loop.
+        // SplObjectStorage's iterator isn't safe across a live mutation.
+        $recipients = iterator_to_array($this->players, preserve_keys: false);
+
+        foreach ($recipients as $player) {
             if ($player === $exclude) {
                 continue;
             }

@@ -25,6 +25,16 @@ final class ActionRegistry
     }
 
     /**
+     * Forces the lazy action map to build now. Call once at server boot so
+     * a wiring problem (e.g. two actions claiming the same name/state)
+     * surfaces immediately instead of on some player's first command.
+     */
+    public function warmUp(): void
+    {
+        $this->actionsByStateAndName();
+    }
+
+    /**
      * @return array<string, array<string, ActionInterface>>
      */
     private function actionsByStateAndName(): array

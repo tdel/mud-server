@@ -50,6 +50,27 @@ final class GameWorld
         return $this->roomInstances[$room->id->toString()] ??= new RoomInstance($room, $this->entityManager);
     }
 
+    /**
+     * Called once at server boot, before any connection is accepted, so
+     * roomInstance()'s lazy `??=` never has to run concurrently — two
+     * coroutines racing to visit the same room for the first time could
+     * otherwise both pass the "not cached yet" check before either
+     * assignment lands, silently losing one RoomInstance (and whichever
+     * players had already joined it).
+     *
+     * @param iterable<Room> $rooms
+     */
+    public function warmRoomInstances(iterable $rooms): void
+    {
+        foreach ($rooms as $room) {
+            $this->roomInstance($room);
+        }
+    }
+
+    // Pure in-memory comparisons, no yield point in the loop — safe under
+    // coroutines as written. If this ever grows a DB call inside the loop,
+    // revisit: a coroutine yielding mid-scan could see $players mutated by
+    // another coroutine's attach()/detach() while iterating.
     public function isAlreadyConnected(Account $account): bool
     {
         foreach ($this->players as $player) {

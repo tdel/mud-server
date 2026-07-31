@@ -48,7 +48,14 @@ final class Take implements ActionInterface
             return;
         }
 
-        $this->itemService->addItemToInventory($item, $character);
+        if (! $this->itemService->addItemToInventory($item, $character)) {
+            // Someone else took it in the time between the lookup above
+            // and now — from this player's perspective, indistinguishable
+            // from it never having been there.
+            $player->send(new ItemNotFound($name));
+
+            return;
+        }
 
         $player->send(new ItemTaken($item->template->name));
     }

@@ -37,11 +37,33 @@ final class ItemServiceTest extends KernelTestCase
         // so that a later read never saw items added afterwards.
         self::assertSame([], $this->itemService->getInventory($character));
 
-        $this->itemService->addItemToInventory($sword, $character);
+        self::assertTrue($this->itemService->addItemToInventory($sword, $character));
 
         $inventory = $this->itemService->getInventory($character);
         self::assertCount(1, $inventory);
         self::assertSame($sword->id->toString(), $inventory[0]->id->toString());
+    }
+
+    public function testAddItemToInventoryFailsIfAlreadyTaken(): void
+    {
+        [$firstCharacter, $room] = $this->persistCharacterInRoom();
+        $secondAccount = new Account('item-service-tester-'.Uuid::v7());
+        $secondAccount->setPassword('irrelevant');
+        $secondCharacter = new Character($secondAccount, $room, 'Rival', Race::Human, 10);
+        $this->entityManager->persist($secondAccount);
+        $this->entityManager->persist($secondCharacter);
+        $this->entityManager->flush();
+
+        $sword = $this->persistItem('Sword', ItemType::Weapon, $room);
+
+        // Simulates what a genuine race under Swoole coroutines produces:
+        // by the time the second player's addItemToInventory() call
+        // re-reads the row under lock, the first player already has it.
+        self::assertTrue($this->itemService->addItemToInventory($sword, $firstCharacter));
+        self::assertFalse($this->itemService->addItemToInventory($sword, $secondCharacter));
+
+        self::assertNotNull($sword->character);
+        self::assertSame($firstCharacter->id->toString(), $sword->character->id->toString());
     }
 
     public function testEquipItemReturnsNullForNonEquippableType(): void

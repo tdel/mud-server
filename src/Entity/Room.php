@@ -7,7 +7,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
 
-#[ORM\Entity(repositoryClass: \App\Repository\RoomRepository::class)]
+#[ORM\Entity]
 #[ORM\UniqueConstraint(name: 'uniq_room_starting', columns: ['is_starting_room'])]
 class Room
 {
